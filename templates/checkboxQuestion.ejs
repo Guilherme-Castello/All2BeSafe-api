@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      h1 { color: #333; }
+      .questao { margin: 15px 0; }
+      .checkbox, .radio { margin: 6px 0; }
+      .radio {font-size: 40;}
+      .checkbox {font-size: 25;}
+      input[type=text] { width: 100%; padding: 6px; margin-top: 4px; }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  </head>
+  <body>
+    <h1 style="text-align: center;"><%= title %></h1>
+    <% questions && questions.forEach((q, idx) => { %>
+      <div class="questao">
+        <label><%= idx+1 %> - <%= q.title %></label>
+        <br/>
+        <br/>
+        
+        <% switch(q.kind) { 
+          case "text": %>
+            <p>________________________________________________________________</p>
+            <p>________________________________________________________________</p>
+        <% break; %>
+
+        <% case "select": %>
+            <% q.options.forEach(op => { %>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <i style="font-size: 32px;" class="fa-square icon"></i>
+                <text><%= op %></text>
+              </div>
+            <% }) %>
+        <% break; %>
+
+        <% case "check_boxes": %>
+          <% q.check_boxes.forEach(checkbox => { %>
+            <div class="checkbox" style="display: flex; align-items: center; gap: 10px;">
+              <i style="font-size: 16px;" class="fa-regular fa-circle fa-lg"></i>  
+              <text style="font-size: 16;"><%= checkbox.label %></text>
+            </div>
+          <% })%>
+        <% break; %>
+
+        <% case "input_date": %>
+          <div>__/__/____</div>
+        <% break; %>
+
+        <% case "input_time": %>
+          <div>__:__</div>
+        <% break; %>
+
+        <% default: %>
+            <p>⚠️ Tipo de questão não suportado <%= q %></p>
+        <% } %>
+      </div>
+    <% }) %>
+    <br>
+  </body>
+</html>
