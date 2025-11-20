@@ -25,6 +25,10 @@
             <p style="margin-top: 0px">A: <%= getAnsware(q.id) %></p>
         <% break; %>
 
+        <% case "weather": %>
+            <p style="margin-top: 0px">A: <%= getAnsware(q.id) %></p>
+        <% break; %>
+
         <% case "select": %>
             <% q.options.forEach(op => { %>
               <div style="display: flex; align-items: center; gap: 10px;">
