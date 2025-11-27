@@ -103,12 +103,13 @@ router.post('/generateFormAnswaredPDFHTML', async (req, res) => {
     const answare = await Answare.findOne({form_id: formid, user_id: userid}).lean()
     if(!answare) throw new Error("Respotas não encontradas")
     const pdfBuffer = await generateAnswarePdf(form, answare);
-
+    console.log('ok here')
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "inline; filename=form.pdf");
     res.end(pdfBuffer);
   } catch(e) {
     console.error('handle: ', e)
+    console.error(e.message)
   }
 })
 
