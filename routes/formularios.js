@@ -137,8 +137,13 @@ async function generatePdf(data) {
 
   // gera PDF com puppeteer
   const browser = await puppeteer.launch({
-  executablePath: '/usr/bin/google-chrome',
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
+  headless: true,
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+  ]
 });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
@@ -172,8 +177,13 @@ async function generateAnswarePdf(formdata, answaredata) {
 
   // gera PDF com puppeteer
   const browser = await puppeteer.launch({
-  executablePath: '/usr/bin/google-chrome',
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
+  headless: true,
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+  ]
 });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
