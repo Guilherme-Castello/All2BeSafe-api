@@ -1,6 +1,83 @@
 <html>
+  <head>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      h1 { color: #333; }
+      .questao { margin: 15px 0; }
+      .checkbox, .radio { margin: 6px 0; }
+      .radio {font-size: 40;}
+      .checkbox {font-size: 25;}
+      input[type=text] { width: 100%; padding: 6px; margin-top: 4px; }
+    </style>
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
+  </head>
   <body>
-    <h1>Teste</h1>
-    <p>Conteúdo simples</p>
+    <h1 style="text-align: center;"><%= '' %></h1>
+    <% form.questions && form.questions.forEach((q, idx) => { %>
+    <p>TESTEEE</p>
+      <div class="questao">
+        <label><%= idx+1 %> - <%= q.title %></label>
+        <br/>
+        <br/>
+        
+        <% switch(q.kind) { 
+          case "text": %>
+            <p style="margin-top: 0px">A: <%= getAnsware(q.id) %></p>
+        <% break; %>
+
+        <% case "weather": %>
+            <p style="margin-top: 0px">A: <%= getAnsware(q.id) %></p>
+        <% break; %>
+
+        <% case "select": %>
+            <% q.options.forEach(op => { %>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <i style="font-size: 16px;" class="<%= getAnsware(q.id) === op ? 'fa-solid fa-square-check' : 'fa-regular fa-square' %> fa-sm"></i>
+                <text><%= op %></text>
+              </div>
+            <% }) %>
+        <% break; %>
+
+        <% case "check_boxes": %>
+          <% q.check_boxes.forEach(checkbox => { %>
+            <div class="checkbox" style="display: flex; align-items: center; gap: 10px;">
+              <i style="font-size: 16px;" class="<%= getBoxStatus(q.id, checkbox.id) ? 'fa-circle-check' : 'fa-circle' %> fa-regular fa-lg"></i>  
+              <text style="font-size: 16px;"><%= checkbox.label %></text>
+            </div>
+          <% })%>
+        <% break; %>
+
+        <% case "input_date": %>
+          <div><%= new Date(getAnsware(q.id)).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) %></div>
+        <% break; %>
+
+        <% case "input_time": %>
+          <div><%= new Date(getAnsware(q.id)).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) %></div>
+        <% break; %>
+
+        <% default: %>
+            <p>⚠️ Tipo de questão não suportado <%= q %></p>
+        <% } %>
+        <p>--------------------------------------------------------------------------------------------------------------</p>
+      </div>
+    <% }) %>
+
+    <% if (answare && answare.signature) { %>
+        <p>Signature:</p>
+        <img src="<%= answare.signature %>" alt="Assinatura" style="width:250px; height:auto; border:1px solid #000;" />
+    <% } %>
+    <br>
   </body>
+  <%
+    function getAnsware(qid){
+      if(answare == undefined) return ''
+      return answare.answares.find(a => a.question_id == qid).answare_text ?? ''
+    } 
+
+    function getBoxStatus(qid, bid){
+      if(answare == undefined) return ''
+      return answare.answares.find(a => a.question_id == qid).answare_checkboxes.find(cb => parseInt(cb.id) == bid).value
+    }
+  
+  %>
 </html>
