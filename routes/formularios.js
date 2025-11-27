@@ -136,7 +136,10 @@ async function generatePdf(data) {
   const html = await ejs.renderFile(templatePath, data);
 
   // gera PDF com puppeteer
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+  executablePath: '/usr/bin/google-chrome',
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+});
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
 
@@ -168,7 +171,10 @@ async function generateAnswarePdf(formdata, answaredata) {
   const html = await ejs.renderFile(templatePath, {form: formdata, answare: answaredata});
 
   // gera PDF com puppeteer
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+  executablePath: '/usr/bin/google-chrome',
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+});
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
 
