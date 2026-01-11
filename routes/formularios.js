@@ -73,6 +73,27 @@ router.post('/answare', async (req, res) => {
   }
 })
 
+router.post('/updateAnsware', async (req, res) => {
+  try {
+    const { aId, updatedAnware } = req.body;
+
+    const answare = await Answare.findByIdAndUpdate(
+      aId,
+      { answares: updatedAnware.answares }, // atualiza TODO o objeto
+      { new: true }              // retorna o doc atualizado
+    );
+
+    if (!answare) {
+      return res.status(404).json({ message: 'Answare not found' });
+    }
+
+    res.status(200).json({ answare, message: 'Answare submitted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/generateFormPDFHTML', async (req, res) => {
   try{
     const { formid } = req.body;

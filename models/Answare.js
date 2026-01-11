@@ -13,7 +13,7 @@ const AnswareItem = new mongoose.Schema({
 }, { _id: false });
 
 const AnswareSchema = new mongoose.Schema({
-  form_id: { type: String, required: true },
+  form_id: { type: String, required: true, ref: "Formulario" },
   user_id: { type: String, required: true},
   answares: [AnswareItem],
   signature: {type: String},
