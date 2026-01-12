@@ -5,6 +5,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import user from './routes/user.js'
 import formularios from './routes/formularios.js'
+import answares from './routes/answares.js'
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ mongoose.connect(process.env.MONGO_URL, {
 // Rotas
 app.use('/api/formularios', formularios);
 app.use('/api/users', user);
+app.use('/api/answares', answares);
 
 // Inicialização do servidor
 const PORT = process.env.PORT || 5000;
