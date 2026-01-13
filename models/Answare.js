@@ -15,6 +15,8 @@ const AnswareItem = new mongoose.Schema({
 const AnswareSchema = new mongoose.Schema({
   form_id: { type: String, required: true, ref: "Formulario" },
   user_id: { type: String, required: true},
+  status: { type: String, required: true, default: 'open'},
+  name: { type: String, required: true},
   answares: [AnswareItem],
   signature: {type: String},
   created_at: { type: Date, default: Date.now }

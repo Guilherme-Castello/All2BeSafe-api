@@ -61,7 +61,7 @@ router.delete('/:id', async (req, res) => {
 
 router.post('/answare', async (req, res) => {
   try{
-    const answare = new Answare(req.body)
+    const answare = new Answare({...req.body, status: 'in_progress'})
     await answare.save()
     console.log(req.body)
 

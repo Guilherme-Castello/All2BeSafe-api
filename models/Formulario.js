@@ -9,6 +9,7 @@ const FormItemCheckBoxesSchema = new mongoose.Schema({
 const FormItemSchema = new mongoose.Schema({
   kind: { type: String, required: true },
   title: { type: String, required: true },
+  section: { type: String, required: false},
   options: [{ type: String }],
   check_boxes: [FormItemCheckBoxesSchema],
   id: {type: String, required: true},
@@ -24,7 +25,6 @@ const FormConfig = new mongoose.Schema({
 })
 
 const FormularioSchema = new mongoose.Schema({
-  status: { type: String, required: true },
   questions: [FormItemSchema],
   created_at: { type: Date, default: Date.now },
   config: FormConfig

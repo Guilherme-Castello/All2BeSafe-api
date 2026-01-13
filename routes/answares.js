@@ -26,14 +26,16 @@ router.post('/getUserAnswares', async (req, res) => {
 
     const result = await Answare
                             .find({ user_id: uId })
-                            .select("_id form_id")
+                            .select("_id form_id status name")
                             .populate("form_id", "config")
                             .lean();
 
     const configs = result.map(a => ({
         answare_id: a._id,
         form_id: a.form_id._id,
-        config: a.form_id.config
+        config: a.form_id.config,
+        name: a.name,
+        status: a.status
     }));
 
 
