@@ -6,10 +6,16 @@ const AnswareCheckbox = new mongoose.Schema({
   id: {type: String},
 }, { _id: false });
 
+const AnswareCoords = new mongoose.Schema({
+  latitude: {type: String, required: true},
+  longitude: { type: String, required: true },
+}, { _id: false, required: false });
+
 const AnswareItem = new mongoose.Schema({
   question_id: {type: String, required: true},
   answare_text: { type: String },
   answare_checkboxes: [AnswareCheckbox],
+  answare_coords: AnswareCoords
 }, { _id: false });
 
 const AnswareSchema = new mongoose.Schema({
