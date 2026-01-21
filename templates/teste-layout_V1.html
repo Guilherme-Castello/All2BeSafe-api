@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Checklist Visual</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-green: #8bc34a; /* Cor aproximada da imagem para Yes/Safe */
+            --color-red: #e74c3c;   /* Cor para No */
+            --color-blue: #2980b9;  /* Cor para N/A */
+            --color-gray: #95a5a6;  /* Cor padrão */
+            --bg-section: #eef2f6;  /* Fundo dos cabeçalhos de seção */
+        }
+
+        body { 
+            font-family: 'Roboto', Arial, sans-serif; 
+            padding: 20px; 
+            background-color: #f9f9f9; 
+            color: #333;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 4px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        }
+        
+        h1 { text-align: center; color: #444; }
+
+        /* --- ESTILOS DO NOVO LAYOUT (GRID) --- */
+
+        /* Cabeçalho de Seção (ex: SITES ACCESS) */
+        .section-header {
+            background-color: var(--bg-section);
+            padding: 15px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            border-radius: 4px;
+        }
+        .section-progress { font-weight: normal; font-size: 0.9em; }
+
+        /* A linha que contém Pergunta e Resposta */
+        .checklist-row {
+            display: grid;
+            /* Define 2 colunas: 
+               1ª: Ocupa o espaço restante (1fr) 
+               2ª: Tamanho fixo ou automático para a caixa de resposta */
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: center; /* Centraliza verticalmente */
+            padding: 15px 10px;
+            border-bottom: 1px solid #eee;
+            font-weight: 500;
+        }
+
+        /* A caixa colorida da resposta */
+        .status-box {
+            padding: 8px 25px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            min-width: 80px; /* Garante uma largura mínima */
+            border-radius: 3px;
+        }
+
+        /* Variações de cores baseadas no texto */
+        .status-green { background-color: var(--color-green); }
+        .status-red { background-color: var(--color-red); }
+        .status-blue { background-color: var(--color-blue); }
+        .status-default { background-color: var(--color-gray); }
+
+
+        /* --- Estilos para Conteúdo Extra (Comentários e Fotos) --- */
+        .row-extras {
+            padding: 10px 10px 20px 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .comment-text { margin-bottom: 15px; color: #666; }
+        .photo-container { display: flex; gap: 10px; flex-wrap: wrap; }
+        .photo-item img { 
+            width: 120px; height: 120px; 
+            object-fit: cover; 
+            border-radius: 4px; border: 1px solid #ddd;
+        }
+        .photo-caption { font-size: 0.8em; color: #888; margin-top: 5px; }
+
+        /* Ícones de Checkbox (para manter compatibilidade se houver) */
+        .fa-square-check, .fa-circle-check { color: var(--color-green); }
+        .fa-square, .fa-circle { color: #ccc; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="app"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DADOS DE TESTE (MOCK) - ADAPTADOS PARA O VISUAL DA FOTO
+        // ==========================================
+        // Simulei uma estrutura que agrupa perguntas por seções para ficar igual à foto.
+        const formStructure = [
+            {
+                sectionTitle: "General Safety",
+                questions: [
+                    { id: 'A', title: "A. Previous reports reviewed and addressed and posted?", kind: "select" },
+                    { id: 'B', title: "B. Previous issues corrected?", kind: "select" },
+                    { id: 'E', title: "E. Hazard Recognition Reporting", kind: "select" },
+                    { id: 'G', title: "G. Other", kind: "select" },
+                ]
+            },
+            {
+                sectionTitle: "SITES ACCESS",
+                progress: "1 / 3 (33.33%)", // Simulação de progresso
+                questions: [
+                    { id: 'SA1', title: "Clean, Level ground", kind: "select" },
+                    { id: 'SA2', title: "Adequate Ramps", kind: "select" },
+                    { id: 'SA3', title: "Adequate unobstructed stairs", kind: "select" }
+                ]
+            }
+        ];
+
+        // Respostas simulando os textos exatos da imagem ("Yes", "Safe", "N/A", "No")
+        // Adicionei campos de 'comment' e 'photos' para simular a parte de baixo da imagem
+        const answareData = [
+            { qid: 'A', text: "Yes" },
+            { qid: 'B', text: "Yes" },
+            { qid: 'E', text: "Safe" },
+            { qid: 'G', text: "N/A" },
+            { 
+                qid: 'SA1', 
+                text: "No", 
+                comment: "In many areas of the site, snow had accumulated along the designated walkways",
+                photos: [
+                    { url: "https://placehold.co/150x150/999/FFF/?text=Snow+Photo", caption: "Photo 1" }
+                ]
+            },
+            { qid: 'SA2', text: "Yes" },
+            { qid: 'SA3', text: "No" },
+        ];
+
+
+        // ==========================================
+        // 2. FUNÇÕES AUXILIARES
+        // ==========================================
+        function getAnswareObj(qid) {
+            return answareData.find(a => a.qid == qid);
+        }
+
+        function getAnswareText(qid) {
+            const ans = getAnswareObj(qid);
+            return ans ? ans.text : '-';
+        }
+
+        // --- NOVA FUNÇÃO CRUCIAL: Determina a cor baseada no texto da resposta ---
+        function getColorClass(text) {
+            // Normaliza o texto para evitar problemas com maiúsculas/minúsculas
+            const cleanText = (text || '').trim().toUpperCase();
+            
+            if (['YES', 'SIM', 'SAFE', 'SEGURO'].includes(cleanText)) {
+                return 'status-green';
+            }
+            if (['NO', 'NÃO', 'UNSAFE'].includes(cleanText)) {
+                return 'status-red';
+            }
+            if (['N/A', 'NA'].includes(cleanText)) {
+                return 'status-blue';
+            }
+            // Se for data, hora, ou outro texto, usa a cor padrão
+            return 'status-default';
+        }
+
+
+        // ==========================================
+        // 3. RENDERIZAÇÃO
+        // ==========================================
+        const app = document.getElementById('app');
+        let htmlContent = `<h1>Relatório de Inspeção</h1>`;
+
+        // Loop pelas SEÇÕES
+        formStructure.forEach(section => {
+            // Renderiza Cabeçalho da Seção
+            htmlContent += `
+                <div class="section-header">
+                    <span>${section.sectionTitle}</span>
+                    ${section.progress ? `<span class="section-progress">${section.progress}</span>` : ''}
+                </div>
+            `;
+
+            // Loop pelas PERGUNTAS da seção
+            section.questions.forEach(q => {
+                const answerObj = getAnswareObj(q.id);
+                const answerText = answerObj ? answerObj.text : '';
+                const colorClass = getColorClass(answerText);
+
+                // --- INÍCIO DA LINHA GRID (Pergunta + Box de Resposta) ---
+                htmlContent += `
+                <div class="checklist-row">
+                    <div>${q.title}</div>
+                    
+                    <div class="status-box ${colorClass}">
+                        ${answerText}
+                    </div>
+                </div>
+                `;
+                // --- FIM DA LINHA GRID ---
+
+
+                // --- RENDERIZAÇÃO DE EXTRAS (Comentários e Fotos abaixo da linha) ---
+                if (answerObj && (answerObj.comment || (answerObj.photos && answerObj.photos.length > 0))) {
+                    htmlContent += `<div class="row-extras">`;
+                    
+                    if (answerObj.comment) {
+                        htmlContent += `<div class="comment-text">${answerObj.comment}</div>`;
+                    }
+
+                    if (answerObj.photos && answerObj.photos.length > 0) {
+                        htmlContent += `<div class="photo-container">`;
+                        answerObj.photos.forEach(photo => {
+                            htmlContent += `
+                                <div class="photo-item">
+                                    <img src="${photo.url}" alt="Foto">
+                                    ${photo.caption ? `<div class="photo-caption">${photo.caption}</div>` : ''}
+                                </div>`;
+                        });
+                        htmlContent += `</div>`; // Fecha photo-container
+                    }
+                    htmlContent += `</div>`; // Fecha row-extras
+                }
+
+            }); // Fim loop perguntas
+        }); // Fim loop seções
+
+        app.innerHTML = htmlContent;
+
+    </script>
+</body>
+</html>
