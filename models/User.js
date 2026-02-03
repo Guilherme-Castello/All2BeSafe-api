@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   access_level: { type: String, required: true },
   email: {type: String, required: true, unique: true},
+  company: { type: String, required: true, ref: "Company" },
   created_at: { type: Date, default: Date.now }
 });
 

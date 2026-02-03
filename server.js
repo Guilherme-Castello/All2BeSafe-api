@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import user from './routes/user.js'
 import formularios from './routes/formularios.js'
 import answares from './routes/answares.js'
+import companies from './routes/companies.js'
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,7 @@ mongoose.connect(process.env.MONGO_URL, {
 app.use('/api/formularios', formularios);
 app.use('/api/users', user);
 app.use('/api/answares', answares);
+app.use('/api/companies', companies);
 
 // Inicialização do servidor
 const PORT = process.env.PORT || 5000;

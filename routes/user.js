@@ -1,24 +1,29 @@
 import express from "express";
 import User from "../models/User.js"; 
+import bcrypt from "bcrypt";
+import { createUser } from "../controllers/User.js";
 
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(email, password)
+
     const user = await User.findOne({ email });
-    console.log(user)
-    if (user == null) {
-        console.log('if')
+    if (!user) {
       return res.status(200).json({ error: 'Usuário não encontrado' });
     }
 
-    if (user.password !== password) {
+    // compara a senha com o hash
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
       return res.status(200).json({ error: 'Senha incorreta' });
     }
 
-    res.json({ message: 'Login realizado com sucesso!', user });
+    const userWithoutPassword = user.toObject()
+    delete  userWithoutPassword.password
+    res.status(200).json({ message: 'Login realizado com sucesso!', user: userWithoutPassword });
+    console.log(userWithoutPassword)
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -26,10 +31,8 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    console.log("AAAAAAAAA")
-    const novo = new User(req.body);
-    await novo.save();
-    res.status(201).json(novo);
+    const createdUser = await createUser(req.body)
+    res.status(201).json(createdUser);
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
