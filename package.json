@@ -5,10 +5,13 @@
   "description": "API para armazenar formulários no MongoDB via Render",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "populate": "node scripts/populate.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@google-cloud/storage": "^7.18.0",
+    "bcrypt": "^6.0.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
@@ -16,6 +19,7 @@
     "express": "^4.21.2",
     "fs": "^0.0.1-security",
     "mongoose": "^7.8.7",
+    "multer": "^2.0.2",
     "nodemon": "^3.1.10",
     "pdfkit": "^0.17.2",
     "puppeteer": "^24.23.0"
