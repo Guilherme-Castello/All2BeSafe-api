@@ -8,7 +8,7 @@ import cors from 'cors';
 
 //  Routes
 import user from './routes/user.js'
-import formularios from './routes/formularios.js'
+import templates from './routes/templates.js'
 import answares from './routes/answares.js'
 import companies from './routes/companies.js'
 import images from './routes/images.js'
@@ -29,7 +29,7 @@ mongoose.connect(process.env.MONGO_URL, {
 });
 
 // Rotas
-app.use('/api/formularios', formularios);
+app.use('/api/templates', templates);
 app.use('/api/users', user);
 app.use('/api/answares', answares);
 app.use('/api/companies', companies);

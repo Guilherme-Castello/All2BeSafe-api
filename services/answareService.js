@@ -1,20 +1,40 @@
 import Answare from "../models/Answare.js";
-import Formulario from "../models/Formulario.js";
+import Template from "../models/Template.js";
 
-export async function getAnswaredFormService(aId) {
+export async function getAnswaredTemplateService(aId) {
   const answare = await Answare.findById(aId);
-  const form = await Formulario.findById(answare.form_id);
+  const template = await Template.findById(answare.template_id);
 
-  return answareForm(form, answare)
+  return answareTemplate(template, answare)
 }
 
-export async function getUserAnswaresService(uId){
-  const answares = await Answare.find({ user_id: uId }).select("_id form_id status name").populate("form_id", "config").lean();
+export async function getUserAnswaresService(uId) {
+  const answares = await Answare.find({ user_id: uId }).select("_id template_id status name").populate("template_id", "config").lean();
   return answares
 }
 
-function answareForm(form, answare) {
-  const questions = form.questions
+export async function createNewAnswareService(answare) {
+  const newAnsware = new Answare({ ...answare, status: 'in_progress' })
+  const savedAnsware = await newAnsware.save()
+
+  return savedAnsware
+}
+
+function getAnswareById(answares, targetId) {
+  return answares.find(a => a.question_id == targetId)
+}
+
+export async function updateAnswareService(aId, updatedAnware) {
+  const answare = await Answare.findByIdAndUpdate(
+    aId,
+    { answares: updatedAnware.answares }, // atualiza TODO o objeto
+    { new: true }              // retorna o doc atualizado
+  );
+  return answare
+}
+
+function answareTemplate(template, answare) {
+  const questions = template.questions
 
   let aQuestions = questions.map(q => {
     let a = getAnswareById(answare.answares, q.id)
@@ -28,9 +48,5 @@ function answareForm(form, answare) {
     }
   })
 
-  return { ...form.toObject(), questions: aQuestions }
-}
-
-function getAnswareById(answares, targetId) {
-  return answares.find(a => a.question_id == targetId)
+  return { ...template.toObject(), questions: aQuestions }
 }
