@@ -1,12 +1,17 @@
 import 'dotenv/config';
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
+
+//  Modules
 import bodyParser from 'body-parser';
+import mongoose from 'mongoose';
+import express from 'express';
+import cors from 'cors';
+
+//  Routes
 import user from './routes/user.js'
-import formularios from './routes/formularios.js'
+import templates from './routes/templates.js'
 import answares from './routes/answares.js'
 import companies from './routes/companies.js'
+import images from './routes/images.js'
 
 const app = express();
 app.use(cors());
@@ -24,10 +29,11 @@ mongoose.connect(process.env.MONGO_URL, {
 });
 
 // Rotas
-app.use('/api/formularios', formularios);
+app.use('/api/templates', templates);
 app.use('/api/users', user);
 app.use('/api/answares', answares);
 app.use('/api/companies', companies);
+app.use('/api/images', images);
 
 // Inicialização do servidor
 const PORT = process.env.PORT || 5000;

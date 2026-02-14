@@ -13,7 +13,7 @@
   </head>
   <body>
     <h1 style="text-align: center;"><%= '' %></h1>
-    <% form.questions && form.questions.forEach((q, idx) => { %>
+    <% template.questions && template.questions.forEach((q, idx) => { %>
       <div class="questao">
         <label><%= idx+1 %> - <%= q.title %></label>
         <br/>

@@ -19,7 +19,7 @@ const AnswareItem = new mongoose.Schema({
 }, { _id: false });
 
 const AnswareSchema = new mongoose.Schema({
-  form_id: { type: String, required: true, ref: "Formulario" },
+  template_id: { type: String, required: true, ref: "Template" },
   user_id: { type: String, required: true},
   status: { type: String, required: true, default: 'open'},
   name: { type: String, required: true},
