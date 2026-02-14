@@ -6,7 +6,8 @@ export async function getAnswaredTemplateController(req, res) {
     const { aId } = req.body;
 
     const answaredTemplate = await getAnswaredTemplateService(aId)
-
+    console.log("ANSWARE")
+    console.log(answaredTemplate)
     return handleSuccess(answaredTemplate, res)
   } catch (err) {
     return handleError(message, res)
