@@ -1,5 +1,6 @@
 export function handleSuccess(content, res){
-  res.status(200).json({content, success: true})
+  console.log('success')
+  return res.status(200).json({content, success: true})
 }
 
 export function handleError(message, res, status = 500) {

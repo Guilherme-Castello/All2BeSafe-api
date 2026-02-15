@@ -45,8 +45,9 @@ export async function createNewAnswareController(req, res) {
 
 export async function updateAnswareController(req, res) {
   try {
+    console.log("UPDATE!!!!!")
     const { aId, updatedAnware } = req.body;
-
+    console.log(updatedAnware.answares)
     const answare = await updateAnswareService(aId, updatedAnware)
 
     if (!answare) {
