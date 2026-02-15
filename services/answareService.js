@@ -40,9 +40,9 @@ function answareTemplate(template, answare) {
     let a = getAnswareById(answare.answares, q.id)
     console.log(a)
     if (q.kind == 'check_boxes') {
-      return { ...q.toObject(), check_boxes: a.answare_checkboxes }
+      return { ...q.toObject(), check_boxes: a.answare_checkboxes, answare_images: a.answare_images }
     } else if (q.kind == 'location') {
-      return { ...q.toObject(), value: a.answare_text, coords: a.answare_coords }
+      return { ...q.toObject(), value: a.answare_text, coords: a.answare_coords, answare_images: a.answare_images }
     } else {
       return { ...q.toObject(), value: a.answare_text, answare_images: a.answare_images }
     }
