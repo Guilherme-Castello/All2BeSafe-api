@@ -15,7 +15,8 @@ const AnswareItem = new mongoose.Schema({
   question_id: {type: String, required: true},
   answare_text: { type: String },
   answare_checkboxes: [AnswareCheckbox],
-  answare_coords: AnswareCoords
+  answare_coords: AnswareCoords,
+  answare_images: [{type: String}]
 }, { _id: false });
 
 const AnswareSchema = new mongoose.Schema({
