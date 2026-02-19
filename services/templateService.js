@@ -1,5 +1,10 @@
 import Answare from "../models/Answare.js";
 import Template from "../models/Template.js";
+import { fileURLToPath } from "url";
+import path from "path";
+import ejs from "ejs";
+import puppeteer from "puppeteer";
+import { getImageSignedUrlService } from "./imageService.js";
 
 export async function createTemplateService(newTemplate) {
   try {
@@ -29,9 +34,9 @@ export async function getTemplateByIdService(tId) {
   }
 }
 
-export async function generateAnswarePDFService(templateid, userid){
-  const template = await Template.findById(templateid)
-  const answare = await Answare.findOne({ template_id: templateid, user_id: userid }).lean()
+export async function generateAnswarePDFService(answareid, userid){
+  const answare = await Answare.findOne({ _id: answareid, user_id: userid }).lean()
+  const template = await Template.findById(answare.template_id)
 
   if (!answare) throw new Error("Respotas não encontradas")
   const pdfBuffer = await generateAnswarePdfService(template, answare);
@@ -43,9 +48,9 @@ async function generateAnswarePdfService(templatedata, answaredata) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const templatePath = path.join(__dirname, "../templates/answaredForm.ejs");
-
+  const formatedPdfStructure = await formatPDFContentJson(templatedata, answaredata)
   // renderiza HTML a partir do template e dos dados
-  const html = await ejs.renderFile(templatePath, { form: templatedata, answare: answaredata });
+  const html = await ejs.renderFile(templatePath, formatedPdfStructure);
 
   // gera PDF com puppeteer
   const browser = await puppeteer.launch({
@@ -73,4 +78,37 @@ async function generateAnswarePdfService(templatedata, answaredata) {
 
   await browser.close();
   return buffer;
+}
+
+async function formatPDFContentJson(template, answare) {
+  let formatedAnsware = []
+  for(let i = 0; i < template.questions.length; i++){
+    const currentQuestion = template.questions[i]
+    let a = getAnswareObj(answare, currentQuestion.id)
+    let aImages = []
+
+    if(a.answare_images && a.answare_images.length > 0) {
+      for(let i = 0; i < a.answare_images.length; i++) {
+        let aCurrentImage = await getImageSignedUrlService(a.answare_images[i])
+        aImages = [...aImages, aCurrentImage]
+      }
+    }
+
+    if(currentQuestion && currentQuestion.kind == 'signature') {
+      const url = await getImageSignedUrlService(a.answare_text)
+      formatedAnsware = [...formatedAnsware, {...a, answare_text: url}]
+    } else {
+      formatedAnsware = [...formatedAnsware, {...a, answare_images: aImages}]
+    }
+  }
+  console.log("FORMATED END")
+  console.log(formatedAnsware)
+  return {form: template, answare: {...answare, answares: formatedAnsware}}
+}
+
+function getAnswareObj(answare, questionId) {
+  if (!answare || !answare.answares) return null;
+  return answare.answares.find(a =>{
+    return a.question_id?.toString() == questionId?.toString()
+  });
 }

@@ -1,4 +1,4 @@
-import { createTemplateService, getTemplateByIdService, getTemplatesService } from "../services/templateService.js";
+import { createTemplateService, generateAnswarePDFService, getTemplateByIdService, getTemplatesService } from "../services/templateService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function createTemplateController(req, res) {
@@ -21,7 +21,6 @@ export async function getTemplatesController(req, res) {
 
 export async function getTemplateByIdController(req, res) {
   try {
-    console.log(req.params)
     const templates = await getTemplateByIdService(req.params.id)
     return handleSuccess(templates, res)
   } catch (e) {
@@ -31,9 +30,8 @@ export async function getTemplateByIdController(req, res) {
 
 export async function generateAnswarePDFController(req, res) {
   try {
-    const { template_id, userid } = req.body;
-
-    const pdfBuffer = generateAnswarePDFService(template_id, userid)
+    const { answare_id, userid } = req.body;
+    const pdfBuffer = await generateAnswarePDFService(answare_id, userid)
 
 
 

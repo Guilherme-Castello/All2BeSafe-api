@@ -10,7 +10,6 @@ export async function uploadImageService(req) {
       resumable: false,
       contentType: req.file.mimetype,
     });
-
     stream.on("error", (err) => {
       console.error(err);
       reject()
@@ -30,7 +29,7 @@ export async function getImageSignedUrlService(fileName) {
   const [url] = await file.getSignedUrl({
     version: "v4",
     action: "read",
-    expires: Date.now() + 1000 * 60 * 60 * 24
+    expires: Date.now() + 1000 * 60 * 59
   })
   console.log(fileName)
   return url
