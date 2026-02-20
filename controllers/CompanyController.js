@@ -1,9 +1,20 @@
-import { companyListService } from "../services/CompanyService.js";
+import { companyListService, registerNewCompanyService } from "../services/CompanyService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
-export default async function companyListController(req, res) {
+export async function companyListController(req, res) {
   try {
     const companyList = await companyListService()
+    handleSuccess(companyList, res)
+  } catch (e) {
+    handleError(e)
+  }
+}
+
+export async function companyRegisterController(req, res) {
+  try {
+    const { name, in_charge } = req.body
+
+    const companyList = await registerNewCompanyService(name, in_charge)
     handleSuccess(companyList, res)
   } catch (e) {
     handleError(e)
