@@ -1,161 +1,247 @@
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8" />
+
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
-    <!--
-    Pontos de Atenção para a Integração:
-    Objeto answare:
-
-    No script original, a resposta era apenas answare_text.
-    Para que as fotos e comentários funcionem como no layout novo, o objeto dentro de answare.answares vindo da sua API precisa ter propriedades como comment (string) e photos (array de objetos com url). Se sua API ainda não manda isso, o layout funcionará, mas não mostrará essas partes extras.
-
-    Estrutura do form:
-    O código acima espera form.sections. Se a sua API antiga mandava form.questions direto (uma lista plana sem agrupar por seções), você precisará ou agrupar isso no backend antes de enviar para o EJS, ou me avisar para eu remover o loop externo de seções (form.sections.forEach).
-    -->
 
     <style>
       :root {
-          --color-green: #8bc34a;
-          --color-red: #e74c3c;
-          --color-blue: #2980b9;
-          --color-gray: #95a5a6;
-          --bg-section: #eef2f6;
+        --color-green: #8bc34a;
+        --color-red: #e74c3c;
+        --color-blue: #2980b9;
+        --color-gray: #95a5a6;
+        --bg-section: #eef2f6;
       }
 
-      body { font-family: 'Roboto', Arial, sans-serif; padding: 20px; color: #333; }
-      h1 { color: #333; text-align: center; }
-
-      /* Estrutura Grid */
-      .section-header {
-          background-color: var(--bg-section);
-          padding: 15px; margin-top: 25px; margin-bottom: 10px;
-          font-weight: 700; color: #555; text-transform: uppercase;
-          display: flex; justify-content: space-between; border-radius: 4px;
+      body {
+        font-family: 'Roboto', Arial, sans-serif;
+        padding: 20px;
+        color: #333;
       }
-      
+
+      h1 {
+        text-align: center;
+        margin-bottom: 5px;
+      }
+
+      .form-meta {
+        text-align: center;
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 30px;
+      }
+
       .checklist-row {
-          display: grid;
-          grid-template-columns: 1fr auto; /* Texto ocupa tudo, Caixa ajusta ao conteúdo */
-          gap: 20px; align-items: center;
-          padding: 15px 10px; border-bottom: 1px solid #eee; font-weight: 500;
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+        align-items: center;
+
+        padding: 15px 10px;
+        border-bottom: 1px solid #eee;
+        font-weight: 500;
       }
 
-      /* Caixas de Status */
-      .status-box {
-          padding: 8px 25px; color: white; font-weight: bold;
-          text-align: center; min-width: 80px; border-radius: 3px;
+      .question-number {
+        font-weight: bold;
+        width: 10%;
       }
+
+      .question-title {
+        width: 40%;
+        word-break: break-word;
+      }
+
+      .status-box {
+        width: 50%;
+        text-align: center;
+      }
+
       .status-green { background-color: var(--color-green); }
       .status-red { background-color: var(--color-red); }
       .status-blue { background-color: var(--color-blue); }
       .status-default { background-color: var(--color-gray); }
 
-      /* Extras (Comentários e Fotos) */
-      .row-extras { padding: 10px 10px 20px 10px; border-bottom: 1px solid #eee; }
-      .comment-text { margin-bottom: 15px; color: #666; font-style: italic; }
-      .photo-container { display: flex; gap: 10px; flex-wrap: wrap; }
-      .photo-item img { 
-          width: 120px; height: 120px; object-fit: cover; 
-          border-radius: 4px; border: 1px solid #ddd;
+      .row-extras {
+        padding: 10px 10px 20px 10px;
+        border-bottom: 1px solid #eee;
       }
-      .photo-caption { font-size: 0.8em; color: #888; margin-top: 5px; }
+
+      .comment-text {
+        margin-bottom: 15px;
+        color: #666;
+        font-style: italic;
+      }
+
+      .photo-container {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .photo-item img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
     </style>
   </head>
+
   <body>
 
-    <h1><%= form.title || 'Relatório' %></h1>
+    <!-- Cabeçalho -->
+    <h1><%= form.config?.name || 'Relatório' %></h1>
 
-    <% if (form.sections && form.sections.length > 0) { %>
-      <% form.sections.forEach(section => { %>
-        
-        <div class="section-header">
-            <span><%= section.sectionTitle %></span>
-            <% if (section.progress) { %>
-                <span style="font-weight: normal; font-size: 0.9em;"><%= section.progress %></span>
-            <% } %>
-        </div>
+    <div class="form-meta">
+      <div><strong>Responsável:</strong> <%= form.config?.in_charge || '-' %></div>
+      <div><strong>Descrição:</strong> <%= form.config?.description || '-' %></div>
+      <div><strong>Respondido por:</strong> <%= answare?.name || '-' %></div>
+    </div>
+    <!-- Questões -->
+    <% if (form.questions && form.questions.length > 0) { %>
 
-        <% section.questions.forEach(q => { 
-             /* Captura a resposta e calcula a cor antes de renderizar o HTML */
-             const ansObj = getAnswareObj(q.id);
-             const ansText = ansObj ? ansObj.answare_text : '-';
-             const colorClass = getColorClass(ansText);
-        %>
-          
-          <div class="checklist-row">
-            <div>
-                <% if(q.id) { %><strong><%= q.id %></strong>. <% } %>
-                <%= q.title %>
-            </div>
-            
-            <div class="status-box <%= colorClass %>">
-                <%= ansText %>
-            </div>
+      <% form.questions.forEach((q, index) => { 
+        const ansObj = getAnswareObj(q.id);
+        const ansText = getAnswareText(ansObj, q.kind)
+        const colorClass = getColorClass(ansText);
+      %>
+
+        <div class="checklist-row">
+          <div class="question-number">
+            <%= index + 1 %>.
           </div>
 
-          <% if (ansObj && (ansObj.comment || (ansObj.photos && ansObj.photos.length > 0))) { %>
-            <div class="row-extras">
-                
-                <% if (ansObj.comment) { %>
-                    <div class="comment-text"><%= ansObj.comment %></div>
-                <% } %>
+          <div class="question-title">
+            <%= q.title %>
+          </div>
 
-                <% if (ansObj.photos && ansObj.photos.length > 0) { %>
-                    <div class="photo-container">
-                        <% ansObj.photos.forEach(photo => { %>
-                            <div class="photo-item">
-                                <img src="<%= photo.url %>" alt="Foto">
-                                <% if (photo.caption) { %>
-                                    <div class="photo-caption"><%= photo.caption %></div>
-                                <% } %>
-                            </div>
-                        <% }) %>
-                    </div>
-                <% } %>
+          <div class="status-box <%= colorClass %>">
+            <%- ansText %>
+          </div>
+        </div>
 
-            </div>
-          <% } %>
+        <% if (ansObj && (ansObj.comment || (ansObj.answare_images && ansObj.answare_images.length))) { %>
+          <div class="row-extras">
 
-        <% }) /* Fim do loop de questões */ %>
-      <% }) /* Fim do loop de seções */ %>
+            <% if (ansObj.comment) { %>
+              <div class="comment-text"><%= ansObj.comment %></div>
+            <% } %>
+
+            <%- renderAnswareImages(ansObj) %>
+
+          </div>
+        <% } %>
+
+      <% }) %>
+
     <% } else { %>
-        <p style="text-align:center">Nenhuma seção encontrada no formulário.</p>
+      <p style="text-align:center">Nenhuma pergunta encontrada.</p>
     <% } %>
 
-    <% if (answare && answare.signature) { %>
-        <div style="margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px;">
-            <p><strong>Assinatura:</strong></p>
-            <img src="<%= answare.signature %>" alt="Assinatura" style="width:250px; height:auto; border:1px dashed #ccc; padding:5px;" />
-        </div>
+    <!-- Assinatura -->
+    <% if (answare?.signature) { %>
+      <div style="margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px;">
+        <p><strong>Assinatura:</strong></p>
+        <img
+          src="<%= answare.signature %>"
+          alt="Assinatura"
+          style="width:250px; border:1px dashed #ccc; padding:5px;"
+        />
+      </div>
     <% } %>
 
   </body>
 
   <%
-    function getAnswareObj(qid) {
-      if (typeof answare === 'undefined' || !answare.answares) return null;
-      // Retorna o objeto completo da resposta para pegarmos texto, comentarios e fotos
-      return answare.answares.find(a => a.question_id == qid);
+
+    function renderAnswareImages(answare) {
+      if (
+        !answare ||
+        !Array.isArray(answare.answare_images) ||
+        answare.answare_images.length === 0
+      ) {
+        return '';
+      }
+
+      const imagesHtml = answare.answare_images
+        .map(url => `
+          <div class="photo-item">
+            <img src="${url}" alt="Foto">
+          </div>
+        `)
+        .join('');
+
+      return `
+        <div class="photo-container">
+          ${imagesHtml}
+        </div>
+      `;
+    }
+    
+    function getAnswareText(answare, kind) {
+      if (
+        answare &&
+        Array.isArray(answare.answare_checkboxes) &&
+        answare.answare_checkboxes.length > 0
+      ) {
+        return `<p>${answare.answare_checkboxes
+          .filter(aBox => aBox.value === true)
+          .map(aBox => aBox.label)
+          .join(', ')}</p>`;
+      }
+
+      if (kind === 'signature' && answare?.answare_text) {
+        return `
+          <img
+            src="${answare.answare_text}"
+            alt="Signature"
+            style="max-width: 200px; max-height: 100px;"
+          />
+        `;
+      }
+
+      if (
+        (kind === 'input_time' || kind === 'input_date') &&
+        answare?.answare_text
+      ) {
+        const date = new Date(answare.answare_text);
+
+        if (isNaN(date.getTime())) return '';
+
+        if (kind === 'input_time') {
+          return `<p>${date.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}</p>`;
+        }
+
+        if (kind === 'input_date') {
+          return `<p>${date.toLocaleDateString('pt-BR')}</p>`;
+        }
+      }
+
+      return answare?.answare_text ?? '';
+    }
+
+    function getAnswareObj(questionId) {
+      if (!answare || !answare.answares) return null;
+      return answare.answares.find(a =>{
+        return a.question_id?.toString() == questionId?.toString()
+      });
     }
 
     function getColorClass(text) {
       if (!text) return 'status-default';
-      
-      // Normaliza para maiúsculo para comparar
-      const cleanText = text.toString().trim().toUpperCase();
 
-      // Regras de Cores
-      if (['YES', 'SIM', 'SAFE', 'SEGURO', 'BOM', 'OK'].includes(cleanText)) {
-          return 'status-green';
-      }
-      if (['NO', 'NÃO', 'UNSAFE', 'PERIGOSO', 'RUIM'].includes(cleanText)) {
-          return 'status-red';
-      }
-      if (['N/A', 'NA', 'N/D'].includes(cleanText)) {
-          return 'status-blue';
-      }
+      const t = text.toString().trim().toUpperCase();
+
+      if (['YES', 'SIM', 'OK', 'BOM', 'SEGURO'].includes(t)) return 'status-green';
+      if (['NO', 'NÃO', 'RUIM', 'PERIGOSO'].includes(t)) return 'status-red';
+      if (['N/A', 'NA', 'N/D'].includes(t)) return 'status-blue';
+
       return 'status-default';
     }
   %>
