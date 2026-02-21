@@ -19,13 +19,19 @@ const AnswareItem = new mongoose.Schema({
   answare_images: [{type: String}]
 }, { _id: false });
 
+const AnswareCompletePercentageSchema = new mongoose.Schema({
+    section_name: { type: String, required: true },
+    percentage: { type: Number, required: true, default: 0 },
+  }, { _id: false }
+);
+
 const AnswareSchema = new mongoose.Schema({
   template_id: { type: String, required: true, ref: "Template" },
   user_id: { type: String, required: true},
   status: { type: String, required: true, default: 'open'},
   name: { type: String, required: true},
   answares: [AnswareItem],
-  signature: {type: String},
+  complete_percentage: {type: [AnswareCompletePercentageSchema], default: []},
   created_at: { type: Date, default: Date.now }
 });
 

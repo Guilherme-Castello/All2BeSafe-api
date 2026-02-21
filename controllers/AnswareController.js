@@ -6,8 +6,6 @@ export async function getAnswaredTemplateController(req, res) {
     const { aId } = req.body;
 
     const answaredTemplate = await getAnswaredTemplateService(aId)
-    console.log("ANSWARE")
-    console.log(answaredTemplate)
     return handleSuccess(answaredTemplate, res)
   } catch (err) {
     return handleError(message, res)
@@ -45,15 +43,13 @@ export async function createNewAnswareController(req, res) {
 
 export async function updateAnswareController(req, res) {
   try {
-    console.log("UPDATE!!!!!")
     const { aId, updatedAnware } = req.body;
-    console.log(updatedAnware.answares)
     const answare = await updateAnswareService(aId, updatedAnware)
 
     if (!answare) {
       return res.status(404).json({ message: 'Answare not found' });
     }
-    const finalAnsware = {...answare, message: "Answare saved!!"}
+    const finalAnsware = {...answare.toObject(), message: "Answare saved!!"}
     return handleSuccess(finalAnsware, res)
   } catch (err) {
     return handleError(err, res)
