@@ -16,7 +16,8 @@ const AnswareItem = new mongoose.Schema({
   answare_text: { type: String },
   answare_checkboxes: [AnswareCheckbox],
   answare_coords: AnswareCoords,
-  answare_images: [{type: String}]
+  answare_images: [{type: String}],
+  answare_note: {type: String}
 }, { _id: false });
 
 const AnswareCompletePercentageSchema = new mongoose.Schema({
