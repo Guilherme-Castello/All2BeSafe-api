@@ -15,30 +15,68 @@ export async function getUserAnswaresService(uId) {
 
 export async function createNewAnswareService(answare) {
   const newAnsware = new Answare({ ...answare, status: 'in_progress' })
+  await getUpdatePercentage(newAnsware);
+  
   const savedAnsware = await newAnsware.save()
 
   return savedAnsware
 }
 
 function getAnswareById(answares, targetId) {
+  if(!answares) return
   return answares.find(a => a.question_id == targetId)
 }
 
 export async function updateAnswareService(aId, updatedAnware) {
-  const answare = await Answare.findByIdAndUpdate(
-    aId,
-    { answares: updatedAnware.answares }, // atualiza TODO o objeto
-    { new: true }              // retorna o doc atualizado
-  );
-  return answare
+  const answare = await Answare.findById(aId);
+  if (!answare) throw new Error("Answare não encontrada");
+
+  answare.answares = updatedAnware.answares;
+
+  await getUpdatePercentage(answare);
+
+  answare.markModified("complete_percentage");
+  await answare.save();
+  return answare;
+}
+
+async function getUpdatePercentage(answare) {
+  const questionTemplate = await Template.findById(answare.template_id);
+  const template = answareTemplate(questionTemplate, answare);
+  const sectionsList = [...new Set(template.questions.map(q => q.section))];
+
+  const complete_percentage = [];
+
+  for (const section of sectionsList) {
+    let answeredCount = 0;
+    let questionCount = 0;
+
+    template.questions.forEach(question => {
+      if (question.section !== section) return;
+      questionCount++;
+
+      const answered =
+        question.value !== "" ||
+        question.check_boxes.some(cb => cb.value === true);
+
+      if (answered) answeredCount++;
+    });
+
+    complete_percentage.push({
+      section_name: section,
+      percentage: questionCount === 0
+        ? 0
+        : (answeredCount * 100) / questionCount,
+    });
+  }
+
+  answare.complete_percentage = complete_percentage;
 }
 
 function answareTemplate(template, answare) {
   const questions = template.questions
-
   let aQuestions = questions.map(q => {
     let a = getAnswareById(answare.answares, q.id)
-    console.log(a)
     if (q.kind == 'check_boxes') {
       return { ...q.toObject(), check_boxes: a.answare_checkboxes, answare_images: a.answare_images }
     } else if (q.kind == 'location') {
