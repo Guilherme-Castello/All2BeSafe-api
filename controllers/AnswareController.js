@@ -1,4 +1,4 @@
-import { createNewAnswareService, getAnswaredTemplateService, getUserAnswaresService, updateAnswareService } from "../services/answareService.js";
+import { createNewAnswareService, getAnswaredTemplateService, getUserAnswaresService, setAsDoneService, updateAnswareService } from "../services/answareService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function getAnswaredTemplateController(req, res) {
@@ -50,6 +50,18 @@ export async function updateAnswareController(req, res) {
       return res.status(404).json({ message: 'Answare not found' });
     }
     const finalAnsware = {...answare.toObject(), message: "Answare saved!!"}
+    return handleSuccess(finalAnsware, res)
+  } catch (err) {
+    return handleError(err, res)
+  }
+}
+
+export async function setAsDoneController(req, res) {
+  try {
+    const { aId } = req.body;
+    const answare = await setAsDoneService(aId)
+
+    const finalAnsware = {message: "Answare set as done!"}
     return handleSuccess(finalAnsware, res)
   } catch (err) {
     return handleError(err, res)

@@ -40,6 +40,11 @@ export async function updateAnswareService(aId, updatedAnware) {
   return answare;
 }
 
+export async function setAsDoneService(aId) {
+  const answare = await Answare.updateOne({_id: aId}, { $set: { status: "done" }})
+  return answare
+}
+
 async function getUpdatePercentage(answare) {
   const questionTemplate = await Template.findById(answare.template_id);
   const template = answareTemplate(questionTemplate, answare);
