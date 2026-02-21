@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const SectionSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, unique: true },
   created_at: { type: Date, default: Date.now }
 }); 
 
