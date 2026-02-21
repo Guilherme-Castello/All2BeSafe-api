@@ -4,11 +4,14 @@ import { handleError, handleSuccess } from "../utils/httpResponse.js";
 export async function newSectionController(req, res) {
   try {
     const { sectionName } = req.body;
-    const createdSection = createSection(sectionName)
-
+    const createdSection = await createSection(sectionName)
+    console.log(createdSection)
     return handleSuccess(createdSection, res)
   } catch (err) {
-    return handleError(message, res)
+    if(err.message.includes("E11000")) {
+      return handleError("Section already exists", res, 200)
+    }
+    return handleError(err.message, res)
   }
 }
 
