@@ -94,7 +94,7 @@ async function formatPDFContentJson(template, answare) {
       }
     }
 
-    if(currentQuestion && currentQuestion.kind == 'signature') {
+    if(currentQuestion && currentQuestion.kind == 'signature' && a.answare_text) {
       const url = await getImageSignedUrlService(a.answare_text)
       formatedAnsware = [...formatedAnsware, {...a, answare_text: url}]
     } else {
