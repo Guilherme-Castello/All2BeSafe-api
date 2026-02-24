@@ -17,6 +17,9 @@ export async function companyRegisterController(req, res) {
     const companyList = await registerNewCompanyService(name, in_charge)
     handleSuccess(companyList, res)
   } catch (e) {
-    handleError(e)
+    if(e.message.includes("E11000")) {
+      return handleError("Company already exists", res, 200)
+    }
+    handleError(e, res)
   }
 }
