@@ -10,11 +10,13 @@ if (!fs.existsSync(gcpKeyPath)) {
     throw new Error("GCP_SA_JSON não está definida");
   }
 
-  fs.writeFileSync(
+  const generatedFile = fs.writeFileSync(
     gcpKeyPath,
     process.env.GCP_SA_JSON,
     { encoding: "utf-8" }
   );
+  console.log("Generated: ")
+  console.log(generatedFile)
 }
 
 console.log("Service Account gerado em:", gcpKeyPath);
