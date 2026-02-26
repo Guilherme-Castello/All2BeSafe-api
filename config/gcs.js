@@ -8,9 +8,6 @@ const credentials = JSON.parse(process.env.CREDENTIALS);
 
 credentials.private_key = credentials.private_key.replace(/\\n/g, "\n");
 
-console.log("CREDENTIALS: ")
-console.log(credentials)
-
 export const storage = new Storage({
   projectId: credentials.project_id,
   credentials,
