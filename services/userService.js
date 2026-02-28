@@ -13,7 +13,7 @@ export async function verifyPassword(password, uPassword) {
   return isCorrect
 }
 
-export async function getUserWithoutPassword(user) {
+export function getUserWithoutPassword(user) {
   const userWithoutPassword = user.toObject()
   delete userWithoutPassword.password
 
@@ -35,4 +35,33 @@ export async function createUser(userStructure){
     console.error("Create user error: ", e)
     throw new Error(e)
   }
+}
+
+export async function userListService(userId) {
+  const currentUserRaw = await User.findOne({ _id: userId });
+  const currentUser = await getUserWithoutPassword(currentUserRaw)
+
+  let users
+  if(currentUser.access_level == 3) {
+    users = await User.find()
+  } else {
+    users = await User.find({company: currentUser.company})
+  }
+
+  users = users.map(user => getUserWithoutPassword(user))
+
+  return users
+}
+
+export async function userDeleteService(userId) {
+  const deleted = await User.deleteOne({_id: userId})
+  return deleted
+}
+
+export async function userUpdateService(userId, newUserStructure) {
+  const updated = await User.updateOne(
+    { _id: userId},
+    { $set: newUserStructure}
+  )
+  return updated
 }
