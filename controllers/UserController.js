@@ -1,4 +1,4 @@
-import { createUser, getHashedPassword, getUserByEmail, getUserWithoutPassword, verifyPassword } from "../services/userService.js";
+import { createUser, getHashedPassword, getUserByEmail, getUserWithoutPassword, userListService, verifyPassword, userDeleteService, userUpdateService } from "../services/userService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function userLoginController(req, res) {
@@ -42,6 +42,42 @@ export async function userRegistryController(req, res) {
     if(e.message.includes("E11000")){
       return handleError("Email already taken", res, 200)
     }
+    return handleError(e.message, res);
+  }
+}
+
+export async function userListController(req, res) {
+  try{
+    const {userId } = req.body;
+
+    const users = await userListService(userId)
+
+    return handleSuccess(users, res)
+  } catch(e){
+    return handleError(e.message, res);
+  }
+}
+
+export async function userDeleteController(req, res) {
+  try{
+    const {userId } = req.body;
+
+    const deleted = await userDeleteService(userId)
+
+    return handleSuccess(deleted, res)
+  } catch(e){
+    return handleError(e.message, res);
+  }
+}
+
+export async function userUpdateController(req, res) {
+  try{
+    const {userId, updatedUser } = req.body;
+
+    const updated = await userUpdateService(userId, updatedUser)
+
+    return handleSuccess(updated, res)
+  } catch(e){
     return handleError(e.message, res);
   }
 }
