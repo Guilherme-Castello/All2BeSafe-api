@@ -10,8 +10,12 @@ export async function getAnswaredTemplateService(aId) {
 }
 
 export async function getUserAnswaresService(uId) {
-  const answares = await Answare.find({ user_id: uId }).select("_id template_id status name").populate("template_id", "config").lean();
-  return answares
+  try{
+    const answares = await Answare.find({ user_id: uId }).select("_id template_id status name").populate("template_id", "config").lean();
+    return answares
+  } catch(e){
+    console.error(e)
+  }
 }
 
 export async function createNewAnswareService(answare) {

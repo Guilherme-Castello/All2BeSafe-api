@@ -8,22 +8,25 @@ export async function getAnswaredTemplateController(req, res) {
     const answaredTemplate = await getAnswaredTemplateService(aId)
     return handleSuccess(answaredTemplate, res)
   } catch (err) {
-    return handleError(message, res)
+    return handleError(err.message, res)
   }
 }
 
 export async function getUserAnswaresController(req, res) {
+  console.log("Get user answares")
   try {
     const { uId } = req.body;
-
+    console.log(uId)
     const result = await getUserAnswaresService(uId)
-    const configs = result.map(a => ({
-      answare_id: a._id,
-      template_id: a.template_id._id,
-      config: a.template_id.config,
-      name: a.name,
-      status: a.status
-    }));
+    const configs = result.map(a => {
+      return {
+        answare_id: a._id,
+        template_id: a.template_id._id,
+        config: a.template_id.config,
+        name: a.name,
+        status: a.status
+      }
+    });
 
     return handleSuccess(configs, res)
   } catch (err) {
@@ -49,7 +52,7 @@ export async function updateAnswareController(req, res) {
     if (!answare) {
       return res.status(404).json({ message: 'Answare not found' });
     }
-    const finalAnsware = {...answare.toObject(), message: "Answare saved!!"}
+    const finalAnsware = { ...answare.toObject(), message: "Answare saved!!" }
     return handleSuccess(finalAnsware, res)
   } catch (err) {
     return handleError(err, res)
@@ -61,7 +64,7 @@ export async function setAsDoneController(req, res) {
     const { aId } = req.body;
     const answare = await setAsDoneService(aId)
 
-    const finalAnsware = {message: "Answare set as done!"}
+    const finalAnsware = { message: "Answare set as done!" }
     return handleSuccess(finalAnsware, res)
   } catch (err) {
     return handleError(err, res)
@@ -72,7 +75,7 @@ export async function defineAnswareNoteController(req, res) {
   try {
     const { aId, qId, aNote } = req.body;
     const answare = await defineAnswareNoteService(aId, qId, aNote)
-    const finalAnsware = {message: "Answare note set!"}
+    const finalAnsware = { message: "Answare note set!" }
     return handleSuccess(finalAnsware, res)
   } catch (err) {
     return handleError(err, res)
