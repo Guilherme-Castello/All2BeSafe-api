@@ -22,7 +22,8 @@ const TemplateConfig = new mongoose.Schema({
   description: {type: String, required: true},
   in_charge: {type: String, required: true},
   weather: {type: Boolean, required: true},
-  location: {type: Boolean, required: true}
+  location: {type: Boolean, required: true},
+  kind: {type: Number, required: true} // -1 para Master, resto usa o code da empresa. Esse parametro é usado para definir a qual company pertence o template. Master mostra apenas em library
 })
 
 const TemplateSchema = new mongoose.Schema({

@@ -4,7 +4,7 @@ import { createTemplateController, generateAnswarePDFController, getTemplateById
 const router = express.Router();
 
 router.post('/', createTemplateController);
-router.get('/', getTemplatesController);
+router.post('/getAll', getTemplatesController);
 router.get('/:id', getTemplateByIdController);
 router.post('/generateAnswarePDF', generateAnswarePDFController)
 
