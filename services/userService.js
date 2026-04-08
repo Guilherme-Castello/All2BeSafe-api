@@ -7,6 +7,12 @@ export async function getUserByEmail(email) {
   return user
 }
 
+export async function getUserById(_id) {
+  const user = await User.findOne({_id})
+
+  return user
+}
+
 export async function verifyPassword(password, uPassword) {
   const isCorrect = await bcrypt.compare(password, uPassword);
 

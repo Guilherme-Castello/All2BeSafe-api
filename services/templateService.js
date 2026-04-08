@@ -8,17 +8,17 @@ import { getImageSignedUrlService } from "./imageService.js";
 
 export async function createTemplateService(newTemplate) {
   try {
-    const novo = new Template(newTemplate);
+    const novo = new Template({...newTemplate});
     await novo.save();
     return novo
   } catch (err) {
-    throw e
+    throw err
   }
 }
 
-export async function getTemplatesService() {
+export async function getTemplatesService(kind) {
   try {
-    const templates = Template.find()
+    const templates = Template.find({"config.kind": kind})
     return templates
   } catch (e) {
     throw e
@@ -36,10 +36,11 @@ export async function getTemplateByIdService(tId) {
 
 export async function generateAnswarePDFService(answareid, userid){
   const answare = await Answare.findOne({ _id: answareid, user_id: userid }).lean()
-  const template = await Template.findById(answare.template_id)
-
   if (!answare) throw new Error("Respotas não encontradas")
+  
+  const template = await Template.findById(answare.template_id)
   const pdfBuffer = await generateAnswarePdfService(template, answare);
+  
   return pdfBuffer
 }
 
