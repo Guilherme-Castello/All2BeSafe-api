@@ -8,6 +8,6 @@ router.post('/getUserAnswares', getUserAnswaresController);
 router.post('/answare', createNewAnswareController)
 router.post('/updateAnsware', updateAnswareController);
 router.post('/setAsDone', setAsDoneController);
-router.post('/addNOte', defineAnswareNoteController);
+router.post('/addNote', defineAnswareNoteController);
 
 export default router;

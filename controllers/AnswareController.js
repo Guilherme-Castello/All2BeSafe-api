@@ -8,7 +8,7 @@ export async function getAnswaredTemplateController(req, res) {
     const answaredTemplate = await getAnswaredTemplateService(aId)
     return handleSuccess(answaredTemplate, res)
   } catch (err) {
-    return handleError(message, res)
+    return handleError(err, res)
   }
 }
 
