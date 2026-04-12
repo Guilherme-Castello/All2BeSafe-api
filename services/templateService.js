@@ -36,8 +36,8 @@ export async function getTemplateByIdService(tId) {
 
 export async function generateAnswarePDFService(answareid, userid){
   const answare = await Answare.findOne({ _id: answareid, user_id: userid }).lean()
-  if (!answare) throw new Error("Respotas não encontradas")
-  
+  if (!answare) throw new Error("Respostas não encontradas")
+
   const template = await Template.findById(answare.template_id)
   const pdfBuffer = await generateAnswarePdfService(template, answare);
   
