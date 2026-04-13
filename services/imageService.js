@@ -24,6 +24,12 @@ export async function uploadImageService(req) {
   })
 }
 
+export async function deleteImageService(fileName) {
+  const file = bucket.file(fileName)
+  await file.delete()
+  return { success: true }
+}
+
 export async function getImageSignedUrlService(fileName) {
   const file = bucket.file(fileName)
   const [url] = await file.getSignedUrl({

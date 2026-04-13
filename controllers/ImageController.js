@@ -1,4 +1,4 @@
-import { getImageSignedUrlService, uploadImageService } from "../services/imageService.js";
+import { deleteImageService, getImageSignedUrlService, uploadImageService } from "../services/imageService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function uploadImageController(req, res) {
@@ -21,6 +21,17 @@ export async function getImageUrlController(req, res) {
     const url = await getImageSignedUrlService(req.body.fileName)
     handleSuccess(url, res)
   } catch (e) {
-    handleError(e, res)
+    handleError(e.message, res)
+  }
+}
+
+export async function deleteImageController(req, res) {
+  try {
+    const { fileName } = req.body
+    if (!fileName) return handleError("fileName is required", res, 400)
+    const result = await deleteImageService(fileName)
+    return handleSuccess(result, res)
+  } catch (e) {
+    return handleError(e.message, res)
   }
 }
