@@ -1,4 +1,4 @@
-import { getImageUrlController, uploadImageController } from "../controllers/ImageController.js";
+import { deleteImageController, getImageUrlController, uploadImageController } from "../controllers/ImageController.js";
 import express from "express";
 import multer from "multer";
 
@@ -16,6 +16,7 @@ const upload = multer({
 });
 
 router.post("/uploadImage", upload.single("file"), uploadImageController);
-router.post("/getImageUrl", getImageUrlController)
+router.post("/getImageUrl", getImageUrlController);
+router.post("/deleteImage", deleteImageController);
 
 export default router;
