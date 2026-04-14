@@ -116,12 +116,25 @@ function answareTemplate(template, answare) {
   const questions = template.questions
   let aQuestions = questions.map(q => {
     let a = getAnswareById(answare.answares, q.id)
+
+    // Documento antigo sem resposta para esta questão
+    if (!a) {
+      return {
+        ...q.toObject(),
+        value: '',
+        check_boxes: q.check_boxes ?? [],
+        coords: null,
+        answare_images: [],
+        answare_note: ''
+      }
+    }
+
     if (q.kind == 'check_boxes') {
-      return { ...q.toObject(), check_boxes: a.answare_checkboxes, answare_images: a.answare_images, answare_note: a.answare_note }
+      return { ...q.toObject(), check_boxes: a.answare_checkboxes ?? [], answare_images: a.answare_images ?? [], answare_note: a.answare_note ?? '' }
     } else if (q.kind == 'location') {
-      return { ...q.toObject(), value: a.answare_text, coords: a.answare_coords, answare_images: a.answare_images, answare_note: a.answare_note }
+      return { ...q.toObject(), value: a.answare_text ?? '', coords: a.answare_coords ?? null, answare_images: a.answare_images ?? [], answare_note: a.answare_note ?? '' }
     } else {
-      return { ...q.toObject(), value: a.answare_text, answare_images: a.answare_images, answare_note: a.answare_note }
+      return { ...q.toObject(), value: a.answare_text ?? '', answare_images: a.answare_images ?? [], answare_note: a.answare_note ?? '' }
     }
   })
   return { ...template.toObject(), questions: aQuestions }
