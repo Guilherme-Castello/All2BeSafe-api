@@ -19,7 +19,7 @@ const TemplateItemSchema = new mongoose.Schema({
 
 const TemplateConfig = new mongoose.Schema({
   name: {type: String, required: true},
-  description: {type: String, required: true},
+  description: {type: String, required: false, default: ""},
   in_charge: {type: String, required: true},
   weather: {type: Boolean, required: true},
   location: {type: Boolean, required: true},
