@@ -64,7 +64,7 @@ async function generateAnswarePdfService(templatedata, answaredata) {
     ]
   });
   const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: "networkidle0" });
+  await page.setContent(html, { waitUntil: "domcontentloaded" });
 
   const buffer = await page.pdf({
     format: "A4",
@@ -86,24 +86,35 @@ async function formatPDFContentJson(template, answare) {
   for(let i = 0; i < template.questions.length; i++){
     const currentQuestion = template.questions[i]
     let a = getAnswareObj(answare, currentQuestion.id)
-    let aImages = []
 
+    // Questão sem resposta: insere item vazio para não crashar o template
+    if (!a) {
+      formatedAnsware = [...formatedAnsware, {
+        question_id: currentQuestion.id,
+        answare_text: '',
+        answare_checkboxes: currentQuestion.check_boxes ?? [],
+        answare_coords: null,
+        answare_images: [],
+        answare_note: ''
+      }]
+      continue
+    }
+
+    let aImages = []
     if(a.answare_images && a.answare_images.length > 0) {
-      for(let i = 0; i < a.answare_images.length; i++) {
-        let aCurrentImage = await getImageSignedUrlService(a.answare_images[i])
+      for(let j = 0; j < a.answare_images.length; j++) {
+        let aCurrentImage = await getImageSignedUrlService(a.answare_images[j])
         aImages = [...aImages, aCurrentImage]
       }
     }
 
-    if(currentQuestion && currentQuestion.kind == 'signature' && a.answare_text) {
+    if(currentQuestion.kind == 'signature' && a.answare_text) {
       const url = await getImageSignedUrlService(a.answare_text)
       formatedAnsware = [...formatedAnsware, {...a, answare_text: url}]
     } else {
       formatedAnsware = [...formatedAnsware, {...a, answare_images: aImages}]
     }
   }
-  console.log("FORMATED END")
-  console.log(formatedAnsware)
   return {form: template, answare: {...answare, answares: formatedAnsware}}
 }
 
