@@ -2,6 +2,7 @@ import Answare from "../models/Answare.js";
 import Template from "../models/Template.js";
 import { fileURLToPath } from "url";
 import path from "path";
+import fs from "fs";
 import ejs from "ejs";
 import puppeteer from "puppeteer";
 import { getImageSignedUrlService } from "./imageService.js";
@@ -49,9 +50,17 @@ async function generateAnswarePdfService(templatedata, answaredata) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const templatePath = path.join(__dirname, "../templates/answaredForm.ejs");
+  const logoPath     = path.join(__dirname, "../assets/all2bsafe.svg");
+
   const formatedPdfStructure = await formatPDFContentJson(templatedata, answaredata)
-  // renderiza HTML a partir do template e dos dados
-  const html = await ejs.renderFile(templatePath, formatedPdfStructure);
+
+  // Lê o SVG do disco e injeta inline — Puppeteer não acessa arquivos via path relativo
+  let logoSvg = null;
+  if (fs.existsSync(logoPath)) {
+    logoSvg = fs.readFileSync(logoPath, "utf8");
+  }
+
+  const html = await ejs.renderFile(templatePath, { ...formatedPdfStructure, logoSvg });
 
   // gera PDF com puppeteer
   const browser = await puppeteer.launch({
