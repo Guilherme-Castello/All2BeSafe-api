@@ -73,7 +73,9 @@ async function generateAnswarePdfService(templatedata, answaredata) {
     ]
   });
   const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: "domcontentloaded" });
+  // networkidle0 aguarda todos os requests de imagem (GCS) completarem antes de gerar o PDF.
+  // Seguro usar agora que Google Fonts foi removido do template.
+  await page.setContent(html, { waitUntil: "networkidle0" });
 
   const buffer = await page.pdf({
     format: "A4",
