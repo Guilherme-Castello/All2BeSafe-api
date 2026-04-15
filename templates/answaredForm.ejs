@@ -21,10 +21,18 @@
       }
 
       /* ── Cabeçalho ── */
+      .report-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 28px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #eee;
+      }
+
       .logo {
-        width: 130px;
-        display: block;
-        margin: 0 auto 12px;
+        flex-shrink: 0;
+        width: 110px;
       }
 
       .logo svg {
@@ -33,18 +41,20 @@
         display: block;
       }
 
-      h1 {
-        text-align: center;
-        font-size: 1.3em;
-        margin-bottom: 4px;
+      .header-info {
+        flex: 1;
+      }
+
+      .header-info h1 {
+        font-size: 1.2em;
+        margin-bottom: 6px;
+        color: #2c3e50;
       }
 
       .form-meta {
-        text-align: center;
         font-size: 0.85em;
         color: #666;
-        margin-bottom: 28px;
-        line-height: 1.6;
+        line-height: 1.8;
       }
 
       /* ── Cabeçalho de seção ── */
@@ -195,15 +205,18 @@
   </head>
 
   <body>
-    <% if (logoSvg) { %>
-      <div class="logo"><%- logoSvg %></div>
-    <% } %>
-
-    <h1><%= form.config?.name || 'Relatório' %></h1>
-    <div class="form-meta">
-      <div><strong>Responsável:</strong> <%= form.config?.in_charge || '-' %></div>
-      <div><strong>Descrição:</strong> <%= form.config?.description || '-' %></div>
-      <div><strong>Respondido por:</strong> <%= answare?.name || '-' %></div>
+    <div class="report-header">
+      <% if (logoSvg) { %>
+        <div class="logo"><%- logoSvg %></div>
+      <% } %>
+      <div class="header-info">
+        <h1><%= form.config?.name || 'Relatório' %></h1>
+        <div class="form-meta">
+          <div><strong>Responsável:</strong> <%= form.config?.in_charge || '-' %></div>
+          <div><strong>Descrição:</strong> <%= form.config?.description || '-' %></div>
+          <div><strong>Respondido por:</strong> <%= answare?.name || '-' %></div>
+        </div>
+      </div>
     </div>
 
     <% if (form.questions && form.questions.length > 0) { %>
@@ -282,17 +295,6 @@
 
     <% } else { %>
       <p style="text-align:center">Nenhuma pergunta encontrada.</p>
-    <% } %>
-
-    <% if (answare?.signature) { %>
-      <div class="signature-section">
-        <p><strong>Assinatura:</strong></p>
-        <img
-          src="<%= answare.signature %>"
-          alt="Assinatura"
-          style="width:250px; border:1px dashed #ccc; padding:5px; margin-top:8px;"
-        />
-      </div>
     <% } %>
 
   </body>
