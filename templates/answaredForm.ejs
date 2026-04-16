@@ -222,74 +222,91 @@
     <% if (form.questions && form.questions.length > 0) { %>
 
       <%
-        let currentSection = null;
-
-        form.questions.forEach((q) => {
-          const ansObj     = getAnswareObj(q.id);
-          const sectionChanged = q.section && q.section !== currentSection;
-          if (sectionChanged) { currentSection = q.section; }
+        // Agrupa questões por seção mantendo a ordem de primeira aparição.
+        // Garante que cada seção apareça uma única vez mesmo que as questões
+        // estejam intercaladas no array original.
+        const sectionOrder = [];
+        const sectionMap   = {};
+        form.questions.forEach(function(q) {
+          const sec = q.section || '__sem_secao__';
+          if (!sectionMap[sec]) {
+            sectionMap[sec] = [];
+            sectionOrder.push(sec);
+          }
+          sectionMap[sec].push(q);
+        });
       %>
 
-        <% if (sectionChanged) { %>
-          <%
-            const pctObj = (answare.complete_percentage || []).find(p => p.section_name === currentSection);
-            const pctStr = pctObj ? Math.round(pctObj.percentage) + '%' : '';
-          %>
+      <% sectionOrder.forEach(function(sectionName) { %>
+        <%
+          const isRealSection = sectionName !== '__sem_secao__';
+          const pctObj = isRealSection
+            ? (answare.complete_percentage || []).find(function(p) { return p.section_name === sectionName; })
+            : null;
+          const pctStr = pctObj ? Math.round(pctObj.percentage) + '%' : '';
+        %>
+
+        <% if (isRealSection) { %>
           <div class="section-header">
-            <span><%= currentSection %></span>
+            <span><%= sectionName %></span>
             <% if (pctStr) { %><span class="section-percentage"><%= pctStr %> completo</span><% } %>
           </div>
         <% } %>
 
-        <% if (q.kind === 'check_boxes') { %>
-          <%
-            const boxes = (ansObj && Array.isArray(ansObj.answare_checkboxes) && ansObj.answare_checkboxes.length > 0)
-              ? ansObj.answare_checkboxes
-              : (Array.isArray(q.check_boxes) ? q.check_boxes.map(b => ({ ...b, value: false })) : []);
-          %>
-          <div class="question-row">
-            <div class="question-title"><%= q.title %></div>
-            <% if (boxes.length > 0) { %>
-              <div class="checkbox-list">
-                <% boxes.forEach(function(box) { %>
-                  <% const isChecked = !!box.value; %>
-                  <div class="checkbox-item <%= isChecked ? 'checked' : '' %>">
-                    <span><%= box.label %></span>
-                    <span class="cb-mark <%= isChecked ? 'checked' : '' %>"><%= isChecked ? '✓' : '' %></span>
-                  </div>
-                <% }) %>
-              </div>
-            <% } %>
-          </div>
+        <% sectionMap[sectionName].forEach(function(q) { %>
+          <% const ansObj = getAnswareObj(q.id); %>
 
-        <% } else { %>
-          <%
-            const ansText    = getAnswareText(ansObj, q.kind);
-            const badgeClass = getBadgeClass(ansText);
-            const isLongText = !badgeClass && !!ansText;
-          %>
-          <div class="question-row">
-            <div class="question-title"><%= q.title %></div>
+          <% if (q.kind === 'check_boxes') { %>
+            <%
+              const boxes = (ansObj && Array.isArray(ansObj.answare_checkboxes) && ansObj.answare_checkboxes.length > 0)
+                ? ansObj.answare_checkboxes
+                : (Array.isArray(q.check_boxes) ? q.check_boxes.map(function(b) { return Object.assign({}, b, { value: false }); }) : []);
+            %>
+            <div class="question-row">
+              <div class="question-title"><%= q.title %></div>
+              <% if (boxes.length > 0) { %>
+                <div class="checkbox-list">
+                  <% boxes.forEach(function(box) { %>
+                    <% const isChecked = !!box.value; %>
+                    <div class="checkbox-item <%= isChecked ? 'checked' : '' %>">
+                      <span><%= box.label %></span>
+                      <span class="cb-mark <%= isChecked ? 'checked' : '' %>"><%= isChecked ? '✓' : '' %></span>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
 
-            <% if (badgeClass) { %>
-              <div class="answer-badge <%= badgeClass %>"><%- ansText %></div>
-            <% } else if (isLongText) { %>
-              <div class="answer-text"><%- ansText %></div>
-            <% } %>
-          </div>
-        <% } %>
+          <% } else { %>
+            <%
+              const ansText    = getAnswareText(ansObj, q.kind);
+              const badgeClass = getBadgeClass(ansText);
+              const isLongText = !badgeClass && !!ansText;
+            %>
+            <div class="question-row">
+              <div class="question-title"><%= q.title %></div>
 
-        <% const hasNote   = ansObj && ansObj.answare_note && ansObj.answare_note.trim(); %>
-        <% const hasImages = ansObj && Array.isArray(ansObj.answare_images) && ansObj.answare_images.length > 0; %>
+              <% if (badgeClass) { %>
+                <div class="answer-badge <%= badgeClass %>"><%- ansText %></div>
+              <% } else if (isLongText) { %>
+                <div class="answer-text"><%- ansText %></div>
+              <% } %>
+            </div>
+          <% } %>
 
-        <% if (hasNote || hasImages) { %>
-          <div class="row-extras">
-            <% if (hasNote) { %>
-              <div class="note-text"><%= ansObj.answare_note %></div>
-            <% } %>
-            <%- renderAnswareImages(ansObj) %>
-          </div>
-        <% } %>
+          <% const hasNote   = ansObj && ansObj.answare_note && ansObj.answare_note.trim(); %>
+          <% const hasImages = ansObj && Array.isArray(ansObj.answare_images) && ansObj.answare_images.length > 0; %>
+
+          <% if (hasNote || hasImages) { %>
+            <div class="row-extras">
+              <% if (hasNote) { %>
+                <div class="note-text"><%= ansObj.answare_note %></div>
+              <% } %>
+              <%- renderAnswareImages(ansObj) %>
+            </div>
+          <% } %>
+
+        <% }) %>
 
       <% }) %>
 
