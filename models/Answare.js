@@ -12,12 +12,16 @@ const AnswareCoords = new mongoose.Schema({
 }, { _id: false, required: false });
 
 const AnswareItem = new mongoose.Schema({
-  question_id: { type: String, required: true },
-  answare_text: { type: String },
-  answare_checkboxes: [AnswareCheckbox],
-  answare_coords: AnswareCoords,
-  answare_images: [{ type: String }],
-  answare_note: { type: String }
+  question_id:      { type: String, required: true },
+  question_title:   { type: String },
+  question_kind:    { type: String },
+  question_section: { type: String },
+  question_options: [{ type: String }],
+  answare_text:        { type: String },
+  answare_checkboxes:  [AnswareCheckbox],
+  answare_coords:      AnswareCoords,
+  answare_images:      [{ type: String }],
+  answare_note:        { type: String }
 }, { _id: false });
 
 const AnswareCompletePercentageSchema = new mongoose.Schema({
@@ -27,13 +31,14 @@ const AnswareCompletePercentageSchema = new mongoose.Schema({
 );
 
 const AnswareSchema = new mongoose.Schema({
-  template_id: { type: String, required: true, ref: "Template" },
-  user_id: { type: String, required: true },
-  status: { type: String, required: true, default: 'open' },
-  name: { type: String, required: true },
-  answares: [AnswareItem],
+  template_id:      { type: String, required: true },
+  template_config:  { type: mongoose.Schema.Types.Mixed },
+  user_id:          { type: String, required: true },
+  status:           { type: String, required: true, default: 'open' },
+  name:             { type: String, required: true },
+  answares:         [AnswareItem],
   complete_percentage: { type: [AnswareCompletePercentageSchema], default: [] },
-  created_at: { type: Date, default: Date.now }
+  created_at:       { type: Date, default: Date.now }
 }, {
   timestamps: {
     createdAt: "created_at",

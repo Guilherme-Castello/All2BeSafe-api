@@ -39,10 +39,21 @@ export async function generateAnswarePDFService(answareid, userid){
   const answare = await Answare.findOne({ _id: answareid, user_id: userid }).lean()
   if (!answare) throw new Error("Respostas não encontradas")
 
-  const template = await Template.findById(answare.template_id)
-  const pdfBuffer = await generateAnswarePdfService(template, answare);
-  
-  return pdfBuffer
+  // Reconstrói a estrutura de template a partir dos metadados gravados na Answare,
+  // eliminando a dependência da coleção Template em tempo de leitura.
+  const templateLike = {
+    config: answare.template_config,
+    questions: answare.answares.map(item => ({
+      id:          item.question_id,
+      title:       item.question_title,
+      kind:        item.question_kind,
+      section:     item.question_section,
+      options:     item.question_options ?? [],
+      check_boxes: item.answare_checkboxes ?? []
+    }))
+  };
+
+  return await generateAnswarePdfService(templateLike, answare);
 }
 
 
