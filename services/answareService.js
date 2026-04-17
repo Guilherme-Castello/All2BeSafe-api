@@ -3,29 +3,74 @@ import Template from "../models/Template.js";
 
 export async function getAnswaredTemplateService(aId) {
   const answare = await Answare.findById(aId);
-  const template = await Template.findById(answare.template_id);
-  console.log("gotAnswareHere")
-  console.log(answare)
-  return answareTemplate(template, answare)
+  if (!answare) throw new Error("Answare não encontrada");
+
+  const questions = answare.answares.map(item => {
+    const i = typeof item.toObject === 'function' ? item.toObject() : item;
+    return {
+      id:              i.question_id,
+      title:           i.question_title,
+      kind:            i.question_kind,
+      section:         i.question_section,
+      options:         i.question_options ?? [],
+      value:           i.answare_text ?? '',
+      check_boxes:     i.answare_checkboxes ?? [],
+      coords:          i.answare_coords ?? null,
+      answare_images:  i.answare_images ?? [],
+      answare_note:    i.answare_note ?? ''
+    };
+  });
+
+  return {
+    config:              answare.template_config,
+    questions,
+    status:              answare.status,
+    complete_percentage: answare.complete_percentage
+  };
 }
 
 export async function getUserAnswaresService(uId) {
-  const answares = await Answare.find({ user_id: uId }).select("_id template_id status name").populate("template_id", "config").lean();
-  return answares
+  return await Answare.find({ user_id: uId })
+    .select("_id template_id status name template_config")
+    .lean();
 }
 
-export async function createNewAnswareService(answare) {
-  const newAnsware = new Answare({ ...answare, status: 'in_progress' })
+export async function createNewAnswareService(data) {
+  const template = await Template.findById(data.template_id);
+  if (!template) throw new Error("Template não encontrado");
+
+  const prePopulatedAnswares = template.questions.map(q => ({
+    question_id:      q.id,
+    question_title:   q.title,
+    question_kind:    q.kind,
+    question_section: q.section ?? '',
+    question_options: q.options ?? [],
+    answare_text:     '',
+    answare_checkboxes: q.check_boxes.map(cb => ({
+      label: cb.label,
+      value: false,
+      id:    cb.id
+    })),
+    answare_images: [],
+    answare_note:   ''
+  }));
+
+  const newAnsware = new Answare({
+    template_id:     data.template_id,
+    template_config: template.config.toObject(),
+    user_id:         data.user_id,
+    name:            data.name,
+    status:          'in_progress',
+    answares:        prePopulatedAnswares
+  });
+
   await getUpdatePercentage(newAnsware);
-
-  const savedAnsware = await newAnsware.save()
-
-  return savedAnsware
+  return await newAnsware.save();
 }
 
 function getAnswareById(answares, targetId) {
-  if (!answares) return
-  return answares.find(a => a.question_id == targetId)
+  if (!answares) return;
+  return answares.find(a => a.question_id == targetId);
 }
 
 export async function updateAnswareService(aId, updatedAnware) {
@@ -40,10 +85,9 @@ export async function updateAnswareService(aId, updatedAnware) {
     const oldItem = existingMap.get(newItem.question_id);
 
     return {
-      ...oldItem?.toObject(), 
-      ...newItem,             
-      answare_note:
-        newItem.answare_note ?? oldItem?.answare_note
+      ...oldItem?.toObject(),
+      ...newItem,
+      answare_note: newItem.answare_note ?? oldItem?.answare_note
     };
   });
 
@@ -59,30 +103,20 @@ export async function updateAnswareService(aId, updatedAnware) {
 }
 
 export async function setAsDoneService(aId) {
-  const answare = await Answare.updateOne({ _id: aId }, { $set: { status: "done" } })
-  return answare
+  return await Answare.updateOne({ _id: aId }, { $set: { status: "done" } });
 }
 
 export async function defineAnswareNoteService(aId, qId, note) {
-  console.log({ aId, qId, note })
-  const answare = await Answare.updateOne(
+  console.log({ aId, qId, note });
+  return await Answare.updateOne(
     { _id: aId },
-    {
-      $set: {
-        "answares.$[item].answare_note": note
-      }
-    },
-    {
-      arrayFilters: [{ "item.question_id": qId }]
-    }
+    { $set: { "answares.$[item].answare_note": note } },
+    { arrayFilters: [{ "item.question_id": qId }] }
   );
-  return answare
 }
 
 async function getUpdatePercentage(answare) {
-  const questionTemplate = await Template.findById(answare.template_id);
-  const template = answareTemplate(questionTemplate, answare);
-  const sectionsList = [...new Set(template.questions.map(q => q.section))];
+  const sectionsList = [...new Set(answare.answares.map(item => item.question_section))];
 
   const complete_percentage = [];
 
@@ -90,13 +124,14 @@ async function getUpdatePercentage(answare) {
     let answeredCount = 0;
     let questionCount = 0;
 
-    template.questions.forEach(question => {
-      if (question.section !== section) return;
+    answare.answares.forEach(item => {
+      if (item.question_section !== section) return;
       questionCount++;
 
+      const i = typeof item.toObject === 'function' ? item.toObject() : item;
       const answered =
-        question.value !== "" ||
-        question.check_boxes.some(cb => cb.value === true);
+        (i.answare_text && i.answare_text !== '') ||
+        (i.answare_checkboxes && i.answare_checkboxes.some(cb => cb.value === true));
 
       if (answered) answeredCount++;
     });
@@ -105,37 +140,9 @@ async function getUpdatePercentage(answare) {
       section_name: section,
       percentage: questionCount === 0
         ? 0
-        : (answeredCount * 100) / questionCount,
+        : (answeredCount * 100) / questionCount
     });
   }
 
   answare.complete_percentage = complete_percentage;
-}
-
-function answareTemplate(template, answare) {
-  const questions = template.questions
-  let aQuestions = questions.map(q => {
-    let a = getAnswareById(answare.answares, q.id)
-
-    // Documento antigo sem resposta para esta questão
-    if (!a) {
-      return {
-        ...q.toObject(),
-        value: '',
-        check_boxes: q.check_boxes ?? [],
-        coords: null,
-        answare_images: [],
-        answare_note: ''
-      }
-    }
-
-    if (q.kind == 'check_boxes') {
-      return { ...q.toObject(), check_boxes: a.answare_checkboxes ?? [], answare_images: a.answare_images ?? [], answare_note: a.answare_note ?? '' }
-    } else if (q.kind == 'location') {
-      return { ...q.toObject(), value: a.answare_text ?? '', coords: a.answare_coords ?? null, answare_images: a.answare_images ?? [], answare_note: a.answare_note ?? '' }
-    } else {
-      return { ...q.toObject(), value: a.answare_text ?? '', answare_images: a.answare_images ?? [], answare_note: a.answare_note ?? '' }
-    }
-  })
-  return { ...template.toObject(), questions: aQuestions }
 }

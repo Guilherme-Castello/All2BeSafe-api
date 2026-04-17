@@ -18,11 +18,11 @@ export async function getUserAnswaresController(req, res) {
 
     const result = await getUserAnswaresService(uId)
     const configs = result.map(a => ({
-      answare_id: a._id,
-      template_id: a.template_id._id,
-      config: a.template_id.config,
-      name: a.name,
-      status: a.status
+      answare_id:  a._id,
+      template_id: a.template_id,
+      config:      a.template_config,
+      name:        a.name,
+      status:      a.status
     }));
 
     return handleSuccess(configs, res)
