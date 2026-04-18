@@ -77,29 +77,41 @@ export async function updateAnswareService(aId, updatedAnware) {
   const answare = await Answare.findById(aId);
   if (!answare) throw new Error("Answare não encontrada");
 
-  const existingMap = new Map(
-    answare.answares.map(item => [item.question_id, item])
+  // Guard: autosave pode disparar antes do form carregar no app —
+  // payload vazio não deve sobrescrever as respostas existentes no banco.
+  if (!updatedAnware.answares || updatedAnware.answares.length === 0) {
+    return answare;
+  }
+
+  // Mapa das atualizações vindas do cliente, indexado por question_id
+  const updatedMap = new Map(
+    updatedAnware.answares.map(item => [String(item.question_id), item])
   );
 
-  const mergedAnswares = updatedAnware.answares.map(newItem => {
-    const oldItem = existingMap.get(newItem.question_id);
-
+  // Itera sobre TODOS os itens do banco (preserva metadados e respostas não tocadas).
+  // Só sobrescreve os itens que o cliente enviou.
+  const mergedAnswares = answare.answares.map(existingItem => {
+    const oldItemObj = existingItem.toObject();
+    const newItem = updatedMap.get(String(oldItemObj.question_id));
+    if (!newItem) return oldItemObj;
     return {
-      ...oldItem?.toObject(),
+      ...oldItemObj,
       ...newItem,
-      answare_note: newItem.answare_note ?? oldItem?.answare_note
+      answare_note: newItem.answare_note ?? oldItemObj.answare_note
     };
   });
 
-  answare.answares = mergedAnswares;
+  const tempDoc = { answares: mergedAnswares };
+  await getUpdatePercentage(tempDoc);
 
-  await getUpdatePercentage(answare);
+  // updateOne atômico: não usa o __v do Mongoose, elimina VersionError
+  // causado por múltiplos autosaves concorrentes.
+  await Answare.updateOne(
+    { _id: aId },
+    { $set: { answares: mergedAnswares, complete_percentage: tempDoc.complete_percentage } }
+  );
 
-  answare.markModified("answares");
-  answare.markModified("complete_percentage");
-
-  await answare.save();
-  return answare;
+  return await Answare.findById(aId);
 }
 
 export async function setAsDoneService(aId) {
