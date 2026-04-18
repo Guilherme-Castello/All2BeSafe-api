@@ -131,8 +131,15 @@ async function formatPDFContentJson(template, answare) {
     }
 
     if(currentQuestion.kind == 'signature' && a.answare_text) {
-      const url = await getImageSignedUrlService(a.answare_text)
-      formatedAnsware = [...formatedAnsware, {...a, answare_text: url}]
+      const parts = a.answare_text.split('|divide|')
+      const signerName   = parts.length > 1 ? parts[0] : ''
+      const imageFileName = parts[parts.length - 1]
+      const signatureUrl = imageFileName ? await getImageSignedUrlService(imageFileName) : ''
+      formatedAnsware = [...formatedAnsware, {
+        ...a,
+        answare_signer_name: signerName,
+        answare_text: signatureUrl
+      }]
     } else {
       formatedAnsware = [...formatedAnsware, {...a, answare_images: aImages}]
     }
