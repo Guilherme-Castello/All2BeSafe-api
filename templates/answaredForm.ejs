@@ -201,6 +201,33 @@
         border-top: 2px solid #eee;
         padding-top: 20px;
       }
+
+      .signature-block {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 10px 14px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .signature-block .question-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .signature-signer {
+        font-size: 0.88em;
+        color: #555;
+      }
+
+      .signature-img {
+        max-width: 220px;
+        max-height: 110px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+      }
     </style>
   </head>
 
@@ -274,6 +301,17 @@
                     </div>
                   <% }) %>
                 </div>
+              <% } %>
+            </div>
+
+          <% } else if (q.kind === 'signature') { %>
+            <div class="signature-block">
+              <div class="question-title"><%= q.title %></div>
+              <% if (ansObj && ansObj.answare_signer_name) { %>
+                <div class="signature-signer"><strong>Nome:</strong> <%= ansObj.answare_signer_name %></div>
+              <% } %>
+              <% if (ansObj && ansObj.answare_text) { %>
+                <img class="signature-img" src="<%= ansObj.answare_text %>" alt="Assinatura">
               <% } %>
             </div>
 
