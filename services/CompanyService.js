@@ -22,3 +22,19 @@ export async function getCompanyByUserId(user_id) {
   const company = await Company.findOne({code: user.company})
   return company
 }
+
+export async function updateCompanyService(companyId, data) {
+  const updated = await Company.findByIdAndUpdate(
+    companyId,
+    { $set: data },
+    { new: true, runValidators: true }
+  )
+  if (!updated) throw new Error("Company not found")
+  return updated
+}
+
+export async function deleteCompanyService(companyId) {
+  const deleted = await Company.findByIdAndDelete(companyId)
+  if (!deleted) throw new Error("Company not found")
+  return deleted
+}
