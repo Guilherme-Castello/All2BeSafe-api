@@ -8,30 +8,44 @@ export async function getAnswaredTemplateService(aId) {
   const questions = answare.answares.map(item => {
     const i = typeof item.toObject === 'function' ? item.toObject() : item;
     return {
-      id:               i.question_id,
-      title:            i.question_title,
-      kind:             i.question_kind,
-      section:          i.question_section,
-      options:          i.question_options ?? [],
+      id: i.question_id,
+      title: i.question_title,
+      kind: i.question_kind,
+      section: i.question_section,
+      options: i.question_options ?? [],
       required_answare: i.required_answare ?? false,
-      value:            i.answare_text ?? '',
-      check_boxes:      i.answare_checkboxes ?? [],
-      coords:           i.answare_coords ?? null,
-      answare_images:   i.answare_images ?? [],
-      answare_note:     i.answare_note ?? ''
+      value: i.answare_text ?? '',
+      check_boxes: i.answare_checkboxes ?? [],
+      coords: i.answare_coords ?? null,
+      answare_images: i.answare_images ?? [],
+      answare_note: i.answare_note ?? ''
     };
   });
 
   return {
-    config:              answare.template_config,
+    config: answare.template_config,
     questions,
-    status:              answare.status,
+    status: answare.status,
     complete_percentage: answare.complete_percentage
   };
 }
 
 export async function getUserAnswaresService(uId) {
-  return await Answare.find({ user_id: uId })
+  return await Answare.find({
+    user_id: uId,
+    status: {
+      $ne: 'archived'
+    }
+  })
+    .select("_id template_id status name template_config")
+    .lean();
+}
+
+export async function getUserArchivedAnswaresService(uId) {
+  return await Answare.find({
+    user_id: uId,
+    status: 'archived'
+  })
     .select("_id template_id status name template_config")
     .lean();
 }
@@ -41,29 +55,29 @@ export async function createNewAnswareService(data) {
   if (!template) throw new Error("Template não encontrado");
 
   const prePopulatedAnswares = template.questions.map(q => ({
-    question_id:       q.id,
-    question_title:    q.title,
-    question_kind:     q.kind,
-    question_section:  q.section ?? '',
-    question_options:  q.options ?? [],
-    required_answare:  q.required_answare ?? false,
-    answare_text:      '',
+    question_id: q.id,
+    question_title: q.title,
+    question_kind: q.kind,
+    question_section: q.section ?? '',
+    question_options: q.options ?? [],
+    required_answare: q.required_answare ?? false,
+    answare_text: '',
     answare_checkboxes: q.check_boxes.map(cb => ({
       label: cb.label,
       value: false,
-      id:    cb.id
+      id: cb.id
     })),
     answare_images: [],
-    answare_note:   ''
+    answare_note: ''
   }));
 
   const newAnsware = new Answare({
-    template_id:     data.template_id,
+    template_id: data.template_id,
     template_config: template.config.toObject(),
-    user_id:         data.user_id,
-    name:            data.name,
-    status:          'in_progress',
-    answares:        prePopulatedAnswares
+    user_id: data.user_id,
+    name: data.name,
+    status: 'in_progress',
+    answares: prePopulatedAnswares
   });
 
   await getUpdatePercentage(newAnsware);
@@ -127,6 +141,17 @@ export async function defineAnswareNoteService(aId, qId, note) {
     { $set: { "answares.$[item].answare_note": note } },
     { arrayFilters: [{ "item.question_id": qId }] }
   );
+}
+
+export async function toggleArchiveAnswareService(aId) {
+  const answare = await Answare.findById(aId);
+  if (!answare) throw new Error("Answare não encontrada");
+
+  const newStatus = answare.status === 'archived' ? 'in_progress' : 'archived';
+
+  await Answare.updateOne({ _id: aId }, { $set: { status: newStatus } });
+
+  return { message: `Answare ${newStatus === 'archived' ? 'archivada' : 'desarquivada'}!` };
 }
 
 async function getUpdatePercentage(answare) {

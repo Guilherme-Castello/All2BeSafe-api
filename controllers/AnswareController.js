@@ -1,4 +1,4 @@
-import { createNewAnswareService, defineAnswareNoteService, getAnswaredTemplateService, getUserAnswaresService, setAsDoneService, updateAnswareService } from "../services/answareService.js";
+import { createNewAnswareService, defineAnswareNoteService, getAnswaredTemplateService, getUserAnswaresService, getUserArchivedAnswaresService, setAsDoneService, toggleArchiveAnswareService, updateAnswareService } from "../services/answareService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function getAnswaredTemplateController(req, res) {
@@ -17,6 +17,25 @@ export async function getUserAnswaresController(req, res) {
     const { uId } = req.body;
 
     const result = await getUserAnswaresService(uId)
+    const configs = result.map(a => ({
+      answare_id:  a._id,
+      template_id: a.template_id,
+      config:      a.template_config,
+      name:        a.name,
+      status:      a.status
+    }));
+
+    return handleSuccess(configs, res)
+  } catch (err) {
+    return handleError(err, res)
+  }
+}
+
+export async function getUserArchivedAnswaresController(req, res) {
+  try {
+    const { uId } = req.body;
+
+    const result = await getUserArchivedAnswaresService(uId)
     const configs = result.map(a => ({
       answare_id:  a._id,
       template_id: a.template_id,
@@ -73,6 +92,19 @@ export async function defineAnswareNoteController(req, res) {
     const { aId, qId, aNote } = req.body;
     const answare = await defineAnswareNoteService(aId, qId, aNote)
     const finalAnsware = {message: "Answare note set!"}
+    return handleSuccess(finalAnsware, res)
+  } catch (err) {
+    return handleError(err, res)
+  }
+}
+
+export async function toggleArchiveController(req, res) {
+  try {
+    const { aId } = req.body;
+    
+    const answare = await toggleArchiveAnswareService(aId)
+    
+    const finalAnsware = {message: "Answare archive status toggled!"}
     return handleSuccess(finalAnsware, res)
   } catch (err) {
     return handleError(err, res)
