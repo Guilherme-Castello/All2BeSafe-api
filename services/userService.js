@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import Company from "../models/Company.js";
 import bcrypt from "bcrypt"
 
 export async function getUserByEmail(email) {
@@ -70,4 +71,34 @@ export async function userUpdateService(userId, newUserStructure) {
     { $set: newUserStructure}
   )
   return updated
+}
+
+/**
+ * Verifica se a empresa do usuário tem acesso ativo ao sistema.
+ * Usuários com company == 0 (super-admin) nunca são bloqueados.
+ * Retorna { allowed: true } ou { allowed: false, message: string }.
+ */
+export async function checkCompanyAccess(companyCode) {
+  // Super-admin (company == 0) bypassa todas as checagens
+  if (String(companyCode) === '0') return { allowed: true }
+
+  const company = await Company.findOne({ code: companyCode })
+
+  // Se a empresa não existir no banco, não bloqueia (edge case de dados)
+  if (!company) return { allowed: true }
+
+  if (!company.is_active) {
+    return { allowed: false, message: 'Company account is inactive. Please contact support.' }
+  }
+
+  const validStatuses = ['active', 'trialing']
+  if (!validStatuses.includes(company.subscription_status)) {
+    return { allowed: false, message: 'Subscription is not active. Please renew your plan to continue.' }
+  }
+
+  if (company.subscription_end && new Date(company.subscription_end) < new Date()) {
+    return { allowed: false, message: 'Subscription has expired. Please contact support to renew.' }
+  }
+
+  return { allowed: true }
 }

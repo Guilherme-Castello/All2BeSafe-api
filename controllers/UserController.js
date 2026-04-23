@@ -1,4 +1,4 @@
-import { createUser, getHashedPassword, getUserByEmail, getUserWithoutPassword, userListService, verifyPassword, userDeleteService, userUpdateService } from "../services/userService.js";
+import { createUser, getHashedPassword, getUserByEmail, getUserWithoutPassword, userListService, verifyPassword, userDeleteService, userUpdateService, checkCompanyAccess } from "../services/userService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function userLoginController(req, res) {
@@ -12,13 +12,19 @@ export async function userLoginController(req, res) {
 
     // compara a senha com o hash
     const isPasswordCorrect = await verifyPassword(password, user.password)
-
     if (!isPasswordCorrect) {
       return handleError("Senha incorreta", res, 200);
     }
 
+    // ── Checagem de acesso da empresa ─────────────────────────────────────────
+    // Usuários com company == 0 (super-admin) são sempre liberados.
+    const { allowed, message } = await checkCompanyAccess(user.company)
+    if (!allowed) {
+      return handleError(message, res, 200);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const userWithoutPassword = await getUserWithoutPassword(user)
-    console.log(userWithoutPassword)
     return handleSuccess({ message: 'Login realizado com sucesso!', user: userWithoutPassword }, res);
   } catch (e) {
     return handleError(e.message, res)
