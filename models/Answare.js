@@ -12,11 +12,12 @@ const AnswareCoords = new mongoose.Schema({
 }, { _id: false, required: false });
 
 const AnswareItem = new mongoose.Schema({
-  question_id:      { type: String, required: true },
-  question_title:   { type: String },
-  question_kind:    { type: String },
-  question_section: { type: String },
-  question_options: [{ type: String }],
+  question_id:       { type: String, required: true },
+  question_title:    { type: String },
+  question_kind:     { type: String },
+  question_section:  { type: String },
+  question_options:  [{ type: String }],
+  required_answare:  { type: Boolean, default: false },
   answare_text:        { type: String },
   answare_checkboxes:  [AnswareCheckbox],
   answare_coords:      AnswareCoords,
