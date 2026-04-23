@@ -15,6 +15,7 @@ const TemplateItemSchema = new mongoose.Schema({
   check_boxes: [TemplateItemCheckBoxesSchema],
   id: {type: String, required: true},
   value: { type: String }, // Armazenar o valor | Importante armazenar por conta de campos como date e time
+  required_answare: { type: Boolean, default: false },
 }, { _id: false });
 
 const TemplateConfig = new mongoose.Schema({

@@ -8,16 +8,17 @@ export async function getAnswaredTemplateService(aId) {
   const questions = answare.answares.map(item => {
     const i = typeof item.toObject === 'function' ? item.toObject() : item;
     return {
-      id:              i.question_id,
-      title:           i.question_title,
-      kind:            i.question_kind,
-      section:         i.question_section,
-      options:         i.question_options ?? [],
-      value:           i.answare_text ?? '',
-      check_boxes:     i.answare_checkboxes ?? [],
-      coords:          i.answare_coords ?? null,
-      answare_images:  i.answare_images ?? [],
-      answare_note:    i.answare_note ?? ''
+      id:               i.question_id,
+      title:            i.question_title,
+      kind:             i.question_kind,
+      section:          i.question_section,
+      options:          i.question_options ?? [],
+      required_answare: i.required_answare ?? false,
+      value:            i.answare_text ?? '',
+      check_boxes:      i.answare_checkboxes ?? [],
+      coords:           i.answare_coords ?? null,
+      answare_images:   i.answare_images ?? [],
+      answare_note:     i.answare_note ?? ''
     };
   });
 
@@ -40,12 +41,13 @@ export async function createNewAnswareService(data) {
   if (!template) throw new Error("Template não encontrado");
 
   const prePopulatedAnswares = template.questions.map(q => ({
-    question_id:      q.id,
-    question_title:   q.title,
-    question_kind:    q.kind,
-    question_section: q.section ?? '',
-    question_options: q.options ?? [],
-    answare_text:     '',
+    question_id:       q.id,
+    question_title:    q.title,
+    question_kind:     q.kind,
+    question_section:  q.section ?? '',
+    question_options:  q.options ?? [],
+    required_answare:  q.required_answare ?? false,
+    answare_text:      '',
     answare_checkboxes: q.check_boxes.map(cb => ({
       label: cb.label,
       value: false,
