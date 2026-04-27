@@ -19,7 +19,22 @@ export async function createTemplateService(newTemplate) {
 
 export async function getTemplatesService(kind) {
   try {
-    const templates = Template.find({"config.kind": kind})
+    const templates = Template.find({
+      "config.kind": kind,
+      status: { $ne: 'archived' }
+    })
+    return templates
+  } catch (e) {
+    throw e
+  }
+}
+
+export async function getArchivedTemplatesService(kind) {
+  try {
+    const templates = Template.find({
+      "config.kind": kind,
+      status: 'archived'
+    })
     return templates
   } catch (e) {
     throw e
@@ -152,4 +167,15 @@ function getAnswareObj(answare, questionId) {
   return answare.answares.find(a =>{
     return a.question_id?.toString() == questionId?.toString()
   });
+}
+
+export async function toggleArchiveTemplateService(tId) {
+  const template = await Template.findById(tId);
+  if (!template) throw new Error("Template não encontrado");
+
+  const newStatus = template.status === 'archived' ? 'open' : 'archived';
+
+  await Template.updateOne({ _id: tId }, { $set: { status: newStatus } });
+
+  return { message: `Template ${newStatus === 'archived' ? 'arquivado' : 'desarquivado'}!` };
 }
