@@ -1,11 +1,13 @@
 import express from "express";
-import { createTemplateController, generateAnswarePDFController, getTemplateByIdController, getTemplatesController } from "../controllers/TemplateController.js";
+import { createTemplateController, generateAnswarePDFController, getArchivedTemplatesController, getTemplateByIdController, getTemplatesController, toggleArchiveTemplateController } from "../controllers/TemplateController.js";
 
 const router = express.Router();
 
 router.post('/', createTemplateController);
 router.post('/getAll', getTemplatesController);
-router.get('/:id', getTemplateByIdController);
+router.post('/getArchived', getArchivedTemplatesController);
 router.post('/generateAnswarePDF', generateAnswarePDFController)
+router.post('/toggleArchive', toggleArchiveTemplateController)
+router.get('/:id', getTemplateByIdController);
 
 export default router;
