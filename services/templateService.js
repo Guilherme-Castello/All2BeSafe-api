@@ -1,5 +1,6 @@
 import Answare from "../models/Answare.js";
 import Template from "../models/Template.js";
+import { getUserById } from "./userService.js";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
@@ -48,6 +49,52 @@ export async function getTemplateByIdService(tId) {
   } catch (e) {
     throw e
   }
+}
+
+export async function updateTemplateService(tId, updatedTemplate, userId) {
+  if (!tId) throw new Error("Template id não informado");
+  if (!updatedTemplate) throw new Error("Template não informado");
+  if (!userId) throw new Error("Usuário não informado");
+  if (!Array.isArray(updatedTemplate.questions)) throw new Error("Questions inválidas");
+  if (!updatedTemplate.config) throw new Error("Config inválida");
+
+  const template = await Template.findById(tId);
+  if (!template) throw new Error("Template não encontrado");
+
+  const user = await getUserById(userId);
+  if (!user) throw new Error("Usuário não encontrado");
+
+  const currentKind = Number(template.config.kind);
+  const requestedKind = Number(updatedTemplate.config.kind);
+  const isMasterTemplate = currentKind === -1;
+  const isMasterUser = String(user.company) === "0" && String(user.access_level) === "3";
+  const isCompanyAdmin = Number(user.access_level) >= 2;
+  const isSameCompanyTemplate = currentKind === Number(user.company);
+
+  if (requestedKind !== currentKind) {
+    throw new Error("Não é permitido alterar a empresa do template");
+  }
+
+  if (isMasterTemplate && !isMasterUser) {
+    throw new Error("Apenas o usuário master pode editar templates master");
+  }
+
+  if (!isMasterTemplate && !isMasterUser && !(isCompanyAdmin && isSameCompanyTemplate)) {
+    throw new Error("Usuário sem permissão para editar este template");
+  }
+
+  const dataToUpdate = {
+    questions: updatedTemplate.questions,
+    config: updatedTemplate.config,
+  };
+
+  if (updatedTemplate.status) {
+    dataToUpdate.status = updatedTemplate.status;
+  }
+
+  await Template.updateOne({ _id: tId }, { $set: dataToUpdate }, { runValidators: true });
+
+  return await Template.findById(tId);
 }
 
 export async function generateAnswarePDFService(answareid, userid){

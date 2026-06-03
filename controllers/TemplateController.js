@@ -1,5 +1,5 @@
 import { getCompanyByUserId } from "../services/CompanyService.js";
-import { createTemplateService, generateAnswarePDFService, getArchivedTemplatesService, getTemplateByIdService, getTemplatesService, toggleArchiveTemplateService } from "../services/templateService.js";
+import { createTemplateService, generateAnswarePDFService, getArchivedTemplatesService, getTemplateByIdService, getTemplatesService, toggleArchiveTemplateService, updateTemplateService } from "../services/templateService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function createTemplateController(req, res) {
@@ -44,6 +44,16 @@ export async function getTemplateByIdController(req, res) {
   try {
     const templates = await getTemplateByIdService(req.params.id)
     return handleSuccess(templates, res)
+  } catch (e) {
+    return handleError(e.message, res)
+  }
+}
+
+export async function updateTemplateController(req, res) {
+  try {
+    const { tId, template, user_id } = req.body;
+    const updatedTemplate = await updateTemplateService(tId, template, user_id)
+    return handleSuccess(updatedTemplate, res)
   } catch (e) {
     return handleError(e.message, res)
   }
