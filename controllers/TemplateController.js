@@ -71,7 +71,7 @@ export async function deleteTemplateController(req, res) {
 
 export async function generateAnswarePDFController(req, res) {
   try {
-    const { answare_id, userid } = req.body;
+    const { answare_id, userid } = req.method === 'GET' ? req.query : req.body;
     const pdfBuffer = await generateAnswarePDFService(answare_id, userid)
 
 
