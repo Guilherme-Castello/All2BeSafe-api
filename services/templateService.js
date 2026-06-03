@@ -97,6 +97,26 @@ export async function updateTemplateService(tId, updatedTemplate, userId) {
   return await Template.findById(tId);
 }
 
+export async function deleteTemplateService(tId, userId) {
+  if (!tId) throw new Error("Template id não informado");
+  if (!userId) throw new Error("Usuário não informado");
+
+  const user = await getUserById(userId);
+  if (!user) throw new Error("Usuário não encontrado");
+
+  const isMasterUser = String(user.company) === "0" && String(user.access_level) === "3";
+  if (!isMasterUser) {
+    throw new Error("Apenas o usuário master pode deletar templates");
+  }
+
+  const template = await Template.findById(tId);
+  if (!template) throw new Error("Template não encontrado");
+
+  await Template.deleteOne({ _id: tId });
+
+  return { message: "Template deletado!" };
+}
+
 export async function generateAnswarePDFService(answareid, userid){
   const answare = await Answare.findOne({ _id: answareid, user_id: userid }).lean()
   if (!answare) throw new Error("Respostas não encontradas")
