@@ -32,7 +32,7 @@ export async function getAnswaredTemplateService(aId) {
 
 export async function getUserAnswaresService(uId) {
   return await Answare.find({ user_id: uId })
-    .select("_id template_id status name template_config")
+    .select("_id template_id status name template_config created_at")
     .lean();
 }
 
