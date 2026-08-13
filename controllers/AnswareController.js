@@ -22,7 +22,8 @@ export async function getUserAnswaresController(req, res) {
       template_id: a.template_id,
       config:      a.template_config,
       name:        a.name,
-      status:      a.status
+      status:      a.status,
+      created_at:  a.created_at
     }));
 
     return handleSuccess(configs, res)

@@ -33,11 +33,9 @@ export async function getAnswaredTemplateService(aId) {
 export async function getUserAnswaresService(uId) {
   return await Answare.find({
     user_id: uId,
-    status: {
-      $ne: 'archived'
-    }
+    status: { $ne: 'archived' }
   })
-    .select("_id template_id status name template_config")
+    .select("_id template_id status name template_config created_at")
     .lean();
 }
 
@@ -46,7 +44,7 @@ export async function getUserArchivedAnswaresService(uId) {
     user_id: uId,
     status: 'archived'
   })
-    .select("_id template_id status name template_config")
+    .select("_id template_id status name template_config created_at")
     .lean();
 }
 
