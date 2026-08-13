@@ -30,7 +30,8 @@ const TemplateConfig = new mongoose.Schema({
 const TemplateSchema = new mongoose.Schema({
   questions: [TemplateItemSchema],
   created_at: { type: Date, default: Date.now },
-  config: TemplateConfig
+  config: TemplateConfig,
+  status: { type: String, enum: ['open', 'archived'], required: true, default: 'open' }
 });
 
 export default mongoose.model('Template', TemplateSchema);
