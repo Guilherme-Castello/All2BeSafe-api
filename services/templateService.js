@@ -6,7 +6,7 @@ import path from "path";
 import fs from "fs";
 import ejs from "ejs";
 import puppeteer from "puppeteer";
-import { getImageSignedUrlService } from "./imageService.js";
+import { getImageAsBase64Service } from "./imageService.js";
 
 function sanitizeQuestionOptions(questions = []) {
   return questions.map(q => ({
@@ -175,68 +175,65 @@ async function generateAnswarePdfService(templatedata, answaredata) {
       "--disable-gpu",
     ]
   });
-  const page = await browser.newPage();
-  // networkidle0 aguarda todos os requests de imagem (GCS) completarem antes de gerar o PDF.
-  // Seguro usar agora que Google Fonts foi removido do template.
-  await page.setContent(html, { waitUntil: "networkidle0" });
+  try {
+    const page = await browser.newPage();
+    // As imagens já estão embutidas como data URIs base64 — não há requests de rede.
+    // domcontentloaded é suficiente e evita timeouts por networkidle0.
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
 
-  const buffer = await page.pdf({
-    format: "A4",
-    printBackground: true,
-    margin: {
-      top: "2cm",
-      bottom: "2cm",
-      left: "2cm",
-      right: "2cm"
-    }
-  });
+    const buffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: {
+        top: "2cm",
+        bottom: "2cm",
+        left: "2cm",
+        right: "2cm"
+      }
+    });
 
-  await browser.close();
-  return buffer;
+    return buffer;
+  } finally {
+    await browser.close();
+  }
 }
 
 async function formatPDFContentJson(template, answare) {
-  let formatedAnsware = []
-  for(let i = 0; i < template.questions.length; i++){
-    const currentQuestion = template.questions[i]
-    let a = getAnswareObj(answare, currentQuestion.id)
+  const formatedAnsware = await Promise.all(
+    template.questions.map(async (currentQuestion) => {
+      const a = getAnswareObj(answare, currentQuestion.id)
 
-    // Questão sem resposta: insere item vazio para não crashar o template
-    if (!a) {
-      formatedAnsware = [...formatedAnsware, {
-        question_id: currentQuestion.id,
-        answare_text: '',
-        answare_checkboxes: currentQuestion.check_boxes ?? [],
-        answare_coords: null,
-        answare_images: [],
-        answare_note: ''
-      }]
-      continue
-    }
-
-    let aImages = []
-    if(a.answare_images && a.answare_images.length > 0) {
-      for(let j = 0; j < a.answare_images.length; j++) {
-        let aCurrentImage = await getImageSignedUrlService(a.answare_images[j])
-        aImages = [...aImages, aCurrentImage]
+      // Questão sem resposta: insere item vazio para não crashar o template
+      if (!a) {
+        return {
+          question_id: currentQuestion.id,
+          answare_text: '',
+          answare_checkboxes: currentQuestion.check_boxes ?? [],
+          answare_coords: null,
+          answare_images: [],
+          answare_note: ''
+        }
       }
-    }
 
-    if(currentQuestion.kind == 'signature' && a.answare_text) {
-      const parts = a.answare_text.split('|divide|')
-      const signerName   = parts.length > 1 ? parts[0] : ''
-      const imageFileName = parts[parts.length - 1]
-      const signatureUrl = imageFileName ? await getImageSignedUrlService(imageFileName) : ''
-      formatedAnsware = [...formatedAnsware, {
-        ...a,
-        answare_signer_name: signerName,
-        answare_text: signatureUrl
-      }]
-    } else {
-      formatedAnsware = [...formatedAnsware, {...a, answare_images: aImages}]
-    }
-  }
-  return {form: template, answare: {...answare, answares: formatedAnsware}}
+      // Baixa todas as imagens em paralelo como data URIs base64 — o Puppeteer
+      // não precisará fazer nenhum request de rede ao renderizar o PDF.
+      const aImages = a.answare_images?.length > 0
+        ? await Promise.all(a.answare_images.map(img => getImageAsBase64Service(img)))
+        : []
+
+      if (currentQuestion.kind === 'signature' && a.answare_text) {
+        const parts = a.answare_text.split('|divide|')
+        const signerName    = parts.length > 1 ? parts[0] : ''
+        const imageFileName = parts[parts.length - 1]
+        const signatureData = imageFileName ? await getImageAsBase64Service(imageFileName) : ''
+        return { ...a, answare_signer_name: signerName, answare_text: signatureData }
+      }
+
+      return { ...a, answare_images: aImages }
+    })
+  )
+
+  return { form: template, answare: { ...answare, answares: formatedAnsware } }
 }
 
 function getAnswareObj(answare, questionId) {
