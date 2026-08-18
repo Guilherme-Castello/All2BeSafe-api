@@ -8,9 +8,19 @@ import ejs from "ejs";
 import puppeteer from "puppeteer";
 import { getImageSignedUrlService } from "./imageService.js";
 
+function sanitizeQuestionOptions(questions = []) {
+  return questions.map(q => ({
+    ...q,
+    options: Array.isArray(q.options) ? q.options.map(o => o.trim()) : q.options
+  }));
+}
+
 export async function createTemplateService(newTemplate) {
   try {
-    const novo = new Template({...newTemplate});
+    const novo = new Template({
+      ...newTemplate,
+      questions: sanitizeQuestionOptions(newTemplate.questions)
+    });
     await novo.save();
     return novo
   } catch (err) {
@@ -84,7 +94,7 @@ export async function updateTemplateService(tId, updatedTemplate, userId) {
   }
 
   const dataToUpdate = {
-    questions: updatedTemplate.questions,
+    questions: sanitizeQuestionOptions(updatedTemplate.questions),
     config: updatedTemplate.config,
   };
 
