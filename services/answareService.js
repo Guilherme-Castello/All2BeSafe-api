@@ -57,7 +57,7 @@ export async function createNewAnswareService(data) {
     question_title: q.title,
     question_kind: q.kind,
     question_section: q.section ?? '',
-    question_options: q.options ?? [],
+    question_options: (q.options ?? []).map(o => o.trim()),
     required_answare: q.required_answare ?? false,
     answare_text: '',
     answare_checkboxes: q.check_boxes.map(cb => ({
