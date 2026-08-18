@@ -52,6 +52,12 @@ export async function createNewAnswareService(data) {
   const template = await Template.findById(data.template_id);
   if (!template) throw new Error("Template não encontrado");
 
+  // Preserva imagens já enviadas pelo app no momento do primeiro create.
+  // O restante das respostas é sempre pré-populado a partir do template.
+  const clientImagesMap = new Map(
+    (data.answares ?? []).map(item => [String(item.question_id), item.answare_images ?? []])
+  );
+
   const prePopulatedAnswares = template.questions.map(q => ({
     question_id: q.id,
     question_title: q.title,
@@ -65,7 +71,7 @@ export async function createNewAnswareService(data) {
       value: false,
       id: cb.id
     })),
-    answare_images: [],
+    answare_images: clientImagesMap.get(String(q.id)) ?? [],
     answare_note: ''
   }));
 
