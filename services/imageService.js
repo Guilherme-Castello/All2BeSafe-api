@@ -40,3 +40,23 @@ export async function getImageSignedUrlService(fileName) {
   console.log(fileName)
   return url
 }
+
+/**
+ * Baixa a imagem diretamente do GCS e retorna um data URI base64.
+ * Elimina a necessidade de o Puppeteer fazer requests de rede durante a geração do PDF.
+ */
+export async function getImageAsBase64Service(fileName) {
+  if (!fileName) return ''
+  try {
+    const file = bucket.file(fileName)
+    const [buffer] = await file.download()
+    const [metadata] = await file.getMetadata()
+    const mimeType = metadata.contentType ?? 'image/jpeg'
+    const base64 = buffer.toString('base64')
+    console.log(`[pdf] imagem convertida: ${fileName}`)
+    return `data:${mimeType};base64,${base64}`
+  } catch (err) {
+    console.error(`[pdf] falha ao baixar imagem ${fileName}:`, err.message)
+    return ''
+  }
+}
