@@ -7,6 +7,7 @@ import express from 'express';
 import cors from 'cors';
 
 //  Routes
+import auth from './routes/auth.js'
 import user from './routes/user.js'
 import templates from './routes/templates.js'
 import answares from './routes/answares.js'
@@ -31,6 +32,7 @@ mongoose.connect(process.env.MONGO_URL, {
 
 // Rotas
 app.use('/api/templates', templates);
+app.use('/api/auth', auth);
 app.use('/api/users', user);
 app.use('/api/answares', answares);
 app.use('/api/companies', companies);
