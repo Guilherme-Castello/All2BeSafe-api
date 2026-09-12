@@ -23,6 +23,9 @@ export async function verifyPassword(password, uPassword) {
 export function getUserWithoutPassword(user) {
   const userWithoutPassword = user.toObject()
   delete userWithoutPassword.password
+  // Dados do fluxo de recuperação de senha nunca saem da API.
+  delete userWithoutPassword.reset_token
+  delete userWithoutPassword.token_expires_at
 
   return userWithoutPassword
 }

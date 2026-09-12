@@ -1,4 +1,5 @@
 import { createUser, getHashedPassword, getUserByEmail, getUserWithoutPassword, userListService, verifyPassword, userDeleteService, userUpdateService, checkCompanyAccess } from "../services/userService.js";
+import { deleteOwnAccountService } from "../services/authService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function userLoginController(req, res) {
@@ -85,5 +86,20 @@ export async function userUpdateController(req, res) {
     return handleSuccess(updated, res)
   } catch(e){
     return handleError(e.message, res);
+  }
+}
+
+// DELETE /api/users/me — exclusão da própria conta (Apple, diretriz 5.1.1).
+// A API não usa token, então o app envia o próprio userId junto da senha
+// atual, que é conferida antes de qualquer exclusão.
+export async function deleteMyAccountController(req, res) {
+  try{
+    const { userId, password } = req.body ?? {};
+
+    const deleted = await deleteOwnAccountService({ userId, password })
+
+    return handleSuccess(deleted, res)
+  } catch(e){
+    return handleError(e.message, res, e.isUserError ? 200 : 500);
   }
 }

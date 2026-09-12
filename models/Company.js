@@ -24,6 +24,10 @@ const CompanySchema = new mongoose.Schema({
   // ── Controle de acesso ─────────────────────────────────────────────────────
   is_active: { type: Boolean, default: true },
 
+  // Empresa criada automaticamente por um cadastro público ("Personal - Nome").
+  // Só empresas com esta flag podem ser removidas junto com a conta do usuário.
+  is_personal: { type: Boolean, default: false },
+
   // ── Notas internas (admin) ─────────────────────────────────────────────────
   notes: { type: String, default: '' },
 
