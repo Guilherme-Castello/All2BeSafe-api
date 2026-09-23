@@ -55,6 +55,7 @@ export async function getImageAsBase64Service(fileName) {
 
     const compressed = await sharp(rawBuffer)
       .resize({ width: 900, withoutEnlargement: true })
+      .flatten({ background: '#ffffff' })
       .jpeg({ quality: 75 })
       .toBuffer()
 
