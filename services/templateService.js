@@ -7,6 +7,8 @@ import fs from "fs";
 import ejs from "ejs";
 import puppeteer from "puppeteer";
 import { getImageAsBase64Service } from "./imageService.js";
+import { isSuperAdmin, isCompanyAdmin, belongsToCompany } from "../utils/permissions.js";
+import { userError } from "../utils/errors.js";
 
 function sanitizeQuestionOptions(questions = []) {
   return questions.map(q => ({
@@ -62,35 +64,33 @@ export async function getTemplateByIdService(tId) {
 }
 
 export async function updateTemplateService(tId, updatedTemplate, userId) {
-  if (!tId) throw new Error("Template id não informado");
-  if (!updatedTemplate) throw new Error("Template não informado");
-  if (!userId) throw new Error("Usuário não informado");
-  if (!Array.isArray(updatedTemplate.questions)) throw new Error("Questions inválidas");
-  if (!updatedTemplate.config) throw new Error("Config inválida");
+  if (!tId) throw userError("Template id não informado");
+  if (!updatedTemplate) throw userError("Template não informado");
+  if (!userId) throw userError("Usuário não informado");
+  if (!Array.isArray(updatedTemplate.questions)) throw userError("Questions inválidas");
+  if (!updatedTemplate.config) throw userError("Config inválida");
 
   const template = await Template.findById(tId);
-  if (!template) throw new Error("Template não encontrado");
+  if (!template) throw userError("Template não encontrado");
 
   const user = await getUserById(userId);
-  if (!user) throw new Error("Usuário não encontrado");
+  if (!user) throw userError("Usuário não encontrado");
 
   const currentKind = Number(template.config.kind);
   const requestedKind = Number(updatedTemplate.config.kind);
   const isMasterTemplate = currentKind === -1;
-  const isMasterUser = String(user.company) === "0" && String(user.access_level) === "3";
-  const isCompanyAdmin = Number(user.access_level) >= 2;
-  const isSameCompanyTemplate = currentKind === Number(user.company);
+  const sameCompanyTemplate = belongsToCompany(user, currentKind);
 
   if (requestedKind !== currentKind) {
-    throw new Error("Não é permitido alterar a empresa do template");
+    throw userError("Não é permitido alterar a empresa do template");
   }
 
-  if (isMasterTemplate && !isMasterUser) {
-    throw new Error("Apenas o usuário master pode editar templates master");
+  if (isMasterTemplate && !isSuperAdmin(user)) {
+    throw userError("Apenas o usuário master pode editar templates master");
   }
 
-  if (!isMasterTemplate && !isMasterUser && !(isCompanyAdmin && isSameCompanyTemplate)) {
-    throw new Error("Usuário sem permissão para editar este template");
+  if (!isMasterTemplate && !isSuperAdmin(user) && !(isCompanyAdmin(user) && sameCompanyTemplate)) {
+    throw userError("Usuário sem permissão para editar este template");
   }
 
   const dataToUpdate = {
@@ -108,23 +108,51 @@ export async function updateTemplateService(tId, updatedTemplate, userId) {
 }
 
 export async function deleteTemplateService(tId, userId) {
-  if (!tId) throw new Error("Template id não informado");
-  if (!userId) throw new Error("Usuário não informado");
+  if (!tId) throw userError("Template id não informado");
+  if (!userId) throw userError("Usuário não informado");
 
   const user = await getUserById(userId);
-  if (!user) throw new Error("Usuário não encontrado");
-
-  const isMasterUser = String(user.company) === "0" && String(user.access_level) === "3";
-  if (!isMasterUser) {
-    throw new Error("Apenas o usuário master pode deletar templates");
-  }
+  if (!user) throw userError("Usuário não encontrado");
 
   const template = await Template.findById(tId);
-  if (!template) throw new Error("Template não encontrado");
+  if (!template) throw userError("Template não encontrado");
+
+  const templateKind = Number(template.config.kind);
+  const isMasterTemplate = templateKind === -1;
+  const sameCompanyTemplate = belongsToCompany(user, templateKind);
+
+  const canDelete =
+    isSuperAdmin(user) ||
+    (isCompanyAdmin(user) && !isMasterTemplate && sameCompanyTemplate);
+
+  if (!canDelete) {
+    throw userError("Usuário sem permissão para deletar este template");
+  }
 
   await Template.deleteOne({ _id: tId });
 
   return { message: "Template deletado!" };
+}
+
+export async function getTemplatesByCompanyService(requesterId, companyCode, { archived = false } = {}) {
+  if (!requesterId) throw userError("Usuário não informado");
+  if (companyCode === undefined || companyCode === null || companyCode === '') {
+    throw userError("Empresa não informada");
+  }
+
+  const requester = await getUserById(requesterId);
+  if (!requester) throw userError("Usuário não encontrado");
+
+  if (!isSuperAdmin(requester)) {
+    throw userError("Apenas o usuário master pode consultar templates de outras empresas");
+  }
+
+  const kind = Number(companyCode);
+  if (kind === -1) {
+    throw userError("Templates master já ficam disponíveis na Library");
+  }
+
+  return archived ? await getArchivedTemplatesService(kind) : await getTemplatesService(kind);
 }
 
 export async function generateAnswarePDFService(answareid, userid){

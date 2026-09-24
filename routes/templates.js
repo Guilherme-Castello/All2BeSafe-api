@@ -1,11 +1,12 @@
 import express from "express";
-import { createTemplateController, deleteTemplateController, generateAnswarePDFController, getArchivedTemplatesController, getTemplateByIdController, getTemplatesController, toggleArchiveTemplateController, updateTemplateController } from "../controllers/TemplateController.js";
+import { createTemplateController, deleteTemplateController, generateAnswarePDFController, getArchivedTemplatesController, getTemplateByIdController, getTemplatesByCompanyController, getTemplatesController, toggleArchiveTemplateController, updateTemplateController } from "../controllers/TemplateController.js";
 
 const router = express.Router();
 
 router.post('/', createTemplateController);
 router.post('/getAll', getTemplatesController);
 router.post('/getArchived', getArchivedTemplatesController);
+router.post('/getByCompany', getTemplatesByCompanyController);
 router.post('/generateAnswarePDF', generateAnswarePDFController)
 router.get('/generateAnswarePDF', generateAnswarePDFController)
 router.post('/toggleArchive', toggleArchiveTemplateController)
