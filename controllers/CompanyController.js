@@ -1,69 +1,46 @@
 import { companyListService, deleteCompanyService, registerNewCompanyService, updateCompanyService } from "../services/CompanyService.js";
-import { getUserById } from "../services/userService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
-
-// Campos que controlam a licença — só access_level=3 ou company=0 pode alterar
-const LICENSE_FIELDS = ['plan_name', 'plan_seats', 'subscription_status', 'subscription_end', 'is_active', 'notes']
 
 export async function companyListController(req, res) {
   try {
     const companyList = await companyListService()
     handleSuccess(companyList, res)
   } catch (e) {
-    handleError(e)
+    handleError(e.message, res)
   }
 }
 
 export async function companyRegisterController(req, res) {
   try {
-    const { name, in_charge } = req.body
+    const { name, in_charge, requester_id } = req.body
 
-    const companyList = await registerNewCompanyService(name, in_charge)
+    const companyList = await registerNewCompanyService(requester_id, name, in_charge)
     handleSuccess(companyList, res)
   } catch (e) {
     if(e.message.includes("E11000")) {
       return handleError("Company already exists", res, 200)
     }
-    handleError(e, res)
+    handleError(e.message, res, e.isUserError ? 200 : 500)
   }
 }
 
 export async function updateCompanyController(req, res) {
   try {
-    const { companyId, updatedCompany, requestingUserId } = req.body
+    const { companyId, updatedCompany, requester_id } = req.body
 
-    // Verifica se o payload tenta alterar campos de licença
-    const hasLicenseFields = LICENSE_FIELDS.some(f => f in (updatedCompany ?? {}))
-
-    if (hasLicenseFields) {
-      if (!requestingUserId) {
-        return handleError("Unauthorized: authentication required to update license fields", res, 200)
-      }
-
-      const requester = await getUserById(requestingUserId)
-      if (!requester) {
-        return handleError("Unauthorized: requesting user not found", res, 200)
-      }
-
-      const isAdmin = String(requester.access_level) === '3' || String(requester.company) === '0'
-      if (!isAdmin) {
-        return handleError("Unauthorized: only administrators can update license fields", res, 200)
-      }
-    }
-
-    const updated = await updateCompanyService(companyId, updatedCompany)
+    const updated = await updateCompanyService(requester_id, companyId, updatedCompany)
     handleSuccess(updated, res)
   } catch (e) {
-    handleError(e.message, res)
+    handleError(e.message, res, e.isUserError ? 200 : 500)
   }
 }
 
 export async function deleteCompanyController(req, res) {
   try {
-    const { companyId } = req.body
-    await deleteCompanyService(companyId)
+    const { companyId, requester_id } = req.body
+    await deleteCompanyService(requester_id, companyId)
     handleSuccess({ message: "Company deleted" }, res)
   } catch (e) {
-    handleError(e.message, res)
+    handleError(e.message, res, e.isUserError ? 200 : 500)
   }
 }

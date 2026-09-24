@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Company from "../models/Company.js";
 import { getHashedPassword, getUserWithoutPassword, verifyPassword } from "./userService.js";
 import { sendRecoveryEmail } from "./emailService.js";
+import { userError } from "../utils/errors.js";
 
 // Nível de acesso concedido a quem se cadastra pelo app (1 = Form Creator:
 // pode criar, editar e responder formulários).
@@ -20,17 +21,8 @@ function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-/**
- * Erro cuja mensagem pode ser exibida ao usuário.
- * Os controllers respondem esses casos com status 200 + success:false,
- * como o login já faz, e deixam o 500 para falhas inesperadas.
- */
-export function userError(message) {
-  const error = new Error(message)
-  error.isUserError = true
-
-  return error
-}
+// Reexportado para não quebrar quem já importa `userError` a partir daqui.
+export { userError };
 
 /**
  * Busca um usuário pelo e-mail ignorando maiúsculas/minúsculas.

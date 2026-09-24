@@ -1,4 +1,4 @@
-import { createUser, getHashedPassword, getUserByEmail, getUserWithoutPassword, userListService, verifyPassword, userDeleteService, userUpdateService, checkCompanyAccess } from "../services/userService.js";
+import { createUserByAdminService, getHashedPassword, getUserByEmail, getUserWithoutPassword, userListService, verifyPassword, userDeleteService, userUpdateService, checkCompanyAccess } from "../services/userService.js";
 import { deleteOwnAccountService } from "../services/authService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
@@ -34,11 +34,11 @@ export async function userLoginController(req, res) {
 
 export async function userRegistryController(req, res) {
   try {
-    const { password, ...rest } = req.body;
+    const { password, requester_id, ...rest } = req.body;
 
     const hashedPassword = await getHashedPassword(password)
 
-    const user = await createUser({
+    const user = await createUserByAdminService(requester_id, {
       ...rest,
       password: hashedPassword
     });
@@ -49,7 +49,7 @@ export async function userRegistryController(req, res) {
     if(e.message.includes("E11000")){
       return handleError("Email already taken", res, 200)
     }
-    return handleError(e.message, res);
+    return handleError(e.message, res, e.isUserError ? 200 : 500);
   }
 }
 
@@ -67,25 +67,25 @@ export async function userListController(req, res) {
 
 export async function userDeleteController(req, res) {
   try{
-    const {userId } = req.body;
+    const { userId, requester_id } = req.body;
 
-    const deleted = await userDeleteService(userId)
+    const deleted = await userDeleteService(requester_id, userId)
 
     return handleSuccess(deleted, res)
   } catch(e){
-    return handleError(e.message, res);
+    return handleError(e.message, res, e.isUserError ? 200 : 500);
   }
 }
 
 export async function userUpdateController(req, res) {
   try{
-    const {userId, updatedUser } = req.body;
+    const { userId, updatedUser, requester_id } = req.body;
 
-    const updated = await userUpdateService(userId, updatedUser)
+    const updated = await userUpdateService(requester_id, userId, updatedUser)
 
     return handleSuccess(updated, res)
   } catch(e){
-    return handleError(e.message, res);
+    return handleError(e.message, res, e.isUserError ? 200 : 500);
   }
 }
 
