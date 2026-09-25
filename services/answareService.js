@@ -1,5 +1,7 @@
 import Answare from "../models/Answare.js";
 import Template from "../models/Template.js";
+import { deleteImageService } from "./imageService.js";
+import { isSuperAdmin } from "../utils/permissions.js";
 
 export async function getAnswaredTemplateService(aId) {
   const answare = await Answare.findById(aId);
@@ -145,6 +147,60 @@ export async function defineAnswareNoteService(aId, qId, note) {
     { $set: { "answares.$[item].answare_note": note } },
     { arrayFilters: [{ "item.question_id": qId }] }
   );
+}
+
+/**
+ * Coleta todos os nomes de arquivo no GCS referenciados por uma answare:
+ * - answare_images de cada questão
+ * - fileName de assinaturas (answare_text = "nome|divide|fileName")
+ */
+function collectGcsKeys(doc) {
+  const keys = new Set();
+  for (const item of doc.answares ?? []) {
+    for (const img of item.answare_images ?? []) {
+      if (img) keys.add(img);
+    }
+    if (item.question_kind === 'signature' && item.answare_text?.includes('|divide|')) {
+      const fileName = item.answare_text.split('|divide|')[1];
+      if (fileName) keys.add(fileName);
+    }
+  }
+  return [...keys];
+}
+
+/**
+ * Exclui definitivamente uma answare e todos os arquivos GCS relacionados.
+ * Permissão: isCompanyAdmin (access_level >= 2) + dono da answare, ou isSuperAdmin.
+ * Ordem segura: GCS primeiro → Mongo depois.
+ */
+export async function deleteAnswareService(aId, requestingUser) {
+  const answare = await Answare.findById(aId);
+  if (!answare) throw new Error("Answare não encontrada.");
+
+  // Qualquer usuário pode apagar as próprias answares.
+  // Apenas o super admin pode apagar answares de outros usuários.
+  const isOwner = String(answare.user_id) === String(requestingUser._id);
+  if (!isOwner && !isSuperAdmin(requestingUser)) {
+    throw new Error("Permission denied: you can only delete your own answares.");
+  }
+
+  // 1. Coletar e apagar arquivos no GCS (tolerante a 404)
+  const gcsKeys = collectGcsKeys(answare);
+  await Promise.allSettled(
+    gcsKeys.map(key =>
+      deleteImageService(key).catch(err => {
+        // 404 = arquivo já não existe; logar mas não bloquear
+        if (!err?.message?.includes('No such object')) {
+          console.error(`[deleteAnsware] falha ao apagar GCS key "${key}":`, err.message);
+        }
+      })
+    )
+  );
+
+  // 2. Apagar documento do Mongo
+  await Answare.findByIdAndDelete(aId);
+
+  return { message: "Answare e arquivos relacionados excluídos com sucesso." };
 }
 
 export async function toggleArchiveAnswareService(aId) {

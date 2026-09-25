@@ -1,4 +1,4 @@
-import { createNewAnswareService, defineAnswareNoteService, getAnswaredTemplateService, getUserAnswaresService, getUserArchivedAnswaresService, setAsDoneService, toggleArchiveAnswareService, updateAnswareService } from "../services/answareService.js";
+import { createNewAnswareService, defineAnswareNoteService, deleteAnswareService, getAnswaredTemplateService, getUserAnswaresService, getUserArchivedAnswaresService, setAsDoneService, toggleArchiveAnswareService, updateAnswareService } from "../services/answareService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function getAnswaredTemplateController(req, res) {
@@ -96,6 +96,18 @@ export async function defineAnswareNoteController(req, res) {
     return handleSuccess(finalAnsware, res)
   } catch (err) {
     return handleError(err, res)
+  }
+}
+
+export async function deleteAnswareController(req, res) {
+  try {
+    const { aId, requesting_user } = req.body;
+    if (!aId || !requesting_user) return handleError("aId and requesting_user are required", res, 400);
+
+    const result = await deleteAnswareService(aId, requesting_user);
+    return handleSuccess(result, res);
+  } catch (err) {
+    return handleError(err, res);
   }
 }
 
