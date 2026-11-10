@@ -14,13 +14,14 @@ export async function createTemplateController(req, res) {
 
 export async function getTemplatesController(req, res) {
   try {
+    const { user_id, page, limit } = req.body;
     let company = undefined
-    if(req.body.user_id){
-      company = await getCompanyByUserId(req.body.user_id)
+    if(user_id){
+      company = await getCompanyByUserId(user_id)
     }
 
-    const templates = await getTemplatesService(company ? company.code : -1)
-    return handleSuccess(templates, res)
+    const result = await getTemplatesService(company ? company.code : -1, { page, limit })
+    return handleSuccess(result, res)
   } catch (e) {
     return handleError(e.message, res)
   }
@@ -28,13 +29,14 @@ export async function getTemplatesController(req, res) {
 
 export async function getArchivedTemplatesController(req, res) {
   try {
+    const { user_id, page, limit } = req.body;
     let company = undefined
-    if(req.body.user_id){
-      company = await getCompanyByUserId(req.body.user_id)
+    if(user_id){
+      company = await getCompanyByUserId(user_id)
     }
 
-    const templates = await getArchivedTemplatesService(company ? company.code : -1)
-    return handleSuccess(templates, res)
+    const result = await getArchivedTemplatesService(company ? company.code : -1, { page, limit })
+    return handleSuccess(result, res)
   } catch (e) {
     return handleError(e.message, res)
   }

@@ -55,11 +55,11 @@ export async function userRegistryController(req, res) {
 
 export async function userListController(req, res) {
   try{
-    const {userId } = req.body;
+    const { userId, page, limit } = req.body;
 
-    const users = await userListService(userId)
+    const result = await userListService(userId, { page, limit })
 
-    return handleSuccess(users, res)
+    return handleSuccess(result, res)
   } catch(e){
     return handleError(e.message, res);
   }

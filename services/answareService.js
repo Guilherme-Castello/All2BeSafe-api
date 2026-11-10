@@ -32,22 +32,38 @@ export async function getAnswaredTemplateService(aId) {
   };
 }
 
-export async function getUserAnswaresService(uId) {
-  return await Answare.find({
-    user_id: uId,
-    status: { $ne: 'archived' }
-  })
-    .select("_id template_id status name template_config created_at")
-    .lean();
+export async function getUserAnswaresService(uId, { page = 1, limit = 20 } = {}) {
+  const filter = { user_id: uId, status: { $ne: 'archived' } };
+  const skip = (page - 1) * limit;
+
+  const [items, total] = await Promise.all([
+    Answare.find(filter)
+      .select("_id template_id status name template_config created_at")
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Answare.countDocuments(filter),
+  ]);
+
+  return { items, total, page, limit, hasMore: skip + items.length < total };
 }
 
-export async function getUserArchivedAnswaresService(uId) {
-  return await Answare.find({
-    user_id: uId,
-    status: 'archived'
-  })
-    .select("_id template_id status name template_config created_at")
-    .lean();
+export async function getUserArchivedAnswaresService(uId, { page = 1, limit = 20 } = {}) {
+  const filter = { user_id: uId, status: 'archived' };
+  const skip = (page - 1) * limit;
+
+  const [items, total] = await Promise.all([
+    Answare.find(filter)
+      .select("_id template_id status name template_config created_at")
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Answare.countDocuments(filter),
+  ]);
+
+  return { items, total, page, limit, hasMore: skip + items.length < total };
 }
 
 export async function createNewAnswareService(data) {

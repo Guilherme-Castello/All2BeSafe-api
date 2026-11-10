@@ -14,10 +14,10 @@ export async function getAnswaredTemplateController(req, res) {
 
 export async function getUserAnswaresController(req, res) {
   try {
-    const { uId } = req.body;
+    const { uId, page, limit } = req.body;
 
-    const result = await getUserAnswaresService(uId)
-    const configs = result.map(a => ({
+    const result = await getUserAnswaresService(uId, { page, limit })
+    const items = result.items.map(a => ({
       answare_id:  a._id,
       template_id: a.template_id,
       config:      a.template_config,
@@ -26,7 +26,7 @@ export async function getUserAnswaresController(req, res) {
       created_at:  a.created_at
     }));
 
-    return handleSuccess(configs, res)
+    return handleSuccess({ items, total: result.total, page: result.page, limit: result.limit, hasMore: result.hasMore }, res)
   } catch (err) {
     return handleError(err, res)
   }
@@ -34,18 +34,19 @@ export async function getUserAnswaresController(req, res) {
 
 export async function getUserArchivedAnswaresController(req, res) {
   try {
-    const { uId } = req.body;
+    const { uId, page, limit } = req.body;
 
-    const result = await getUserArchivedAnswaresService(uId)
-    const configs = result.map(a => ({
+    const result = await getUserArchivedAnswaresService(uId, { page, limit })
+    const items = result.items.map(a => ({
       answare_id:  a._id,
       template_id: a.template_id,
       config:      a.template_config,
       name:        a.name,
-      status:      a.status
+      status:      a.status,
+      created_at:  a.created_at
     }));
 
-    return handleSuccess(configs, res)
+    return handleSuccess({ items, total: result.total, page: result.page, limit: result.limit, hasMore: result.hasMore }, res)
   } catch (err) {
     return handleError(err, res)
   }
