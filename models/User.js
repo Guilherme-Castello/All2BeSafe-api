@@ -13,4 +13,7 @@ const UserSchema = new mongoose.Schema({
   token_expires_at: { type: Date, default: null }
 });
 
+// Índice em company: usado em userListService para filtrar usuários da mesma empresa
+UserSchema.index({ company: 1 });
+
 export default mongoose.model('User', UserSchema);

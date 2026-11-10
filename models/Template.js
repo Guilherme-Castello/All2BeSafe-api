@@ -34,4 +34,7 @@ const TemplateSchema = new mongoose.Schema({
   status: { type: String, enum: ['open', 'archived'], required: true, default: 'open' }
 });
 
+// Índice composto: principal filtro de leitura (config.kind + status)
+TemplateSchema.index({ 'config.kind': 1, status: 1 });
+
 export default mongoose.model('Template', TemplateSchema);
