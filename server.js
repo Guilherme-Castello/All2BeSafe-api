@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 //  Modules
 import bodyParser from 'body-parser';
+import compression from 'compression';
 import mongoose from 'mongoose';
 import express from 'express';
 import cors from 'cors';
@@ -17,7 +18,10 @@ import sections from './routes/sections.js'
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+// Comprime respostas HTTP com gzip/deflate — reduz drasticamente o tráfego
+// em endpoints de listagem (templates, answares, users).
+app.use(compression());
+app.use(bodyParser.json({ limit: '5mb' }));
 
 // Conexão com MongoDB Atlas
 mongoose.connect(process.env.MONGO_URL, {
