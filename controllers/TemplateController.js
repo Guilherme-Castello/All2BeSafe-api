@@ -1,6 +1,7 @@
 import { getCompanyByUserId } from "../services/CompanyService.js";
 import { createTemplateService, deleteTemplateService, generateAnswarePDFService, getArchivedTemplatesService, getTemplateByIdService, getTemplatesByCompanyService, getTemplatesService, toggleArchiveTemplateService, updateTemplateService } from "../services/templateService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
+import { pdfQueue } from "../queues/pdfQueue.js";
 
 export async function createTemplateController(req, res) {
   try {
@@ -81,20 +82,49 @@ export async function getTemplatesByCompanyController(req, res) {
   }
 }
 
+/**
+ * Enfileira um job de geração de PDF e retorna imediatamente com { jobId }.
+ * O app usa GET /pdfStatus/:jobId para acompanhar o progresso.
+ */
 export async function generateAnswarePDFController(req, res) {
   try {
     const { answare_id, userid } = req.method === 'GET' ? req.query : req.body;
-    const pdfBuffer = await generateAnswarePDFService(answare_id, userid)
+    if (!answare_id || !userid) return handleError('answare_id e userid são obrigatórios', res, 400);
 
+    const job = await pdfQueue.add('generate', { answareid: answare_id, userid });
 
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "inline; filename=form.pdf");
-    res.end(pdfBuffer);
-    
+    return handleSuccess({ jobId: job.id, status: 'queued' }, res);
   } catch (e) {
-    console.error('handle: ', e)
-    return handleError(e.message, res)
+    console.error('[generateAnswarePDFController]', e);
+    return handleError(e.message, res);
+  }
+}
+
+/**
+ * Verifica o status de um job de PDF.
+ * Retorna: { status: 'queued' | 'processing' | 'done' | 'error', url?, message? }
+ */
+export async function getPdfStatusController(req, res) {
+  try {
+    const { jobId } = req.params;
+    const job = await pdfQueue.getJob(jobId);
+    if (!job) return handleError('Job não encontrado', res, 404);
+
+    const state = await job.getState();
+
+    if (state === 'completed') {
+      const { signedUrl } = job.returnvalue;
+      return handleSuccess({ status: 'done', url: signedUrl }, res);
+    }
+
+    if (state === 'failed') {
+      return handleSuccess({ status: 'error', message: job.failedReason }, res);
+    }
+
+    // 'waiting', 'active', 'delayed', 'waiting-children'
+    return handleSuccess({ status: state === 'active' ? 'processing' : 'queued' }, res);
+  } catch (e) {
+    return handleError(e.message, res);
   }
 }
 
