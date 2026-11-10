@@ -64,13 +64,19 @@ export async function createNewAnswareController(req, res) {
 export async function updateAnswareController(req, res) {
   try {
     const { aId, updatedAnware } = req.body;
-    const answare = await updateAnswareService(aId, updatedAnware)
+    const result = await updateAnswareService(aId, updatedAnware)
 
-    if (!answare) {
+    if (!result) {
       return res.status(404).json({ message: 'Answare not found' });
     }
-    const finalAnsware = {...answare.toObject(), message: "Answare saved!!"}
-    return handleSuccess(finalAnsware, res)
+
+    // Resposta enxuta: o app só precisa do _id, complete_percentage e confirmação.
+    // Evita serializar o documento inteiro (~centenas de KB) a cada autosave.
+    return handleSuccess({
+      _id: result._id,
+      complete_percentage: result.complete_percentage,
+      message: "Answare saved!!",
+    }, res)
   } catch (err) {
     return handleError(err, res)
   }
