@@ -34,29 +34,43 @@ export async function createTemplateService(newTemplate) {
 // O detalhe completo é obtido por getTemplateByIdService ao abrir/editar.
 const TEMPLATE_LIST_PROJECTION = '_id status created_at config';
 
-export async function getTemplatesService(kind) {
+export async function getTemplatesService(kind, { page = 1, limit = 20 } = {}) {
   try {
-    const templates = await Template.find({
-      "config.kind": kind,
-      status: { $ne: 'archived' }
-    })
-      .select(TEMPLATE_LIST_PROJECTION)
-      .lean();
-    return templates;
+    const filter = { "config.kind": kind, status: { $ne: 'archived' } };
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      Template.find(filter)
+        .select(TEMPLATE_LIST_PROJECTION)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Template.countDocuments(filter),
+    ]);
+
+    return { items, total, page, limit, hasMore: skip + items.length < total };
   } catch (e) {
     throw e
   }
 }
 
-export async function getArchivedTemplatesService(kind) {
+export async function getArchivedTemplatesService(kind, { page = 1, limit = 20 } = {}) {
   try {
-    const templates = await Template.find({
-      "config.kind": kind,
-      status: 'archived'
-    })
-      .select(TEMPLATE_LIST_PROJECTION)
-      .lean();
-    return templates;
+    const filter = { "config.kind": kind, status: 'archived' };
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      Template.find(filter)
+        .select(TEMPLATE_LIST_PROJECTION)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Template.countDocuments(filter),
+    ]);
+
+    return { items, total, page, limit, hasMore: skip + items.length < total };
   } catch (e) {
     throw e
   }
