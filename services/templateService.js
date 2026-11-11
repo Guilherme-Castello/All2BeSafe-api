@@ -30,13 +30,19 @@ export async function createTemplateService(newTemplate) {
   }
 }
 
+// Projeção de lista: exclui questions[] (payload pesado).
+// O detalhe completo é obtido por getTemplateByIdService ao abrir/editar.
+const TEMPLATE_LIST_PROJECTION = '_id status created_at config';
+
 export async function getTemplatesService(kind) {
   try {
-    const templates = Template.find({
+    const templates = await Template.find({
       "config.kind": kind,
       status: { $ne: 'archived' }
     })
-    return templates
+      .select(TEMPLATE_LIST_PROJECTION)
+      .lean();
+    return templates;
   } catch (e) {
     throw e
   }
@@ -44,11 +50,13 @@ export async function getTemplatesService(kind) {
 
 export async function getArchivedTemplatesService(kind) {
   try {
-    const templates = Template.find({
+    const templates = await Template.find({
       "config.kind": kind,
       status: 'archived'
     })
-    return templates
+      .select(TEMPLATE_LIST_PROJECTION)
+      .lean();
+    return templates;
   } catch (e) {
     throw e
   }

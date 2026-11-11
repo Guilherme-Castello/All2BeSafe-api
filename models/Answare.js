@@ -47,4 +47,7 @@ const AnswareSchema = new mongoose.Schema({
   }
 });
 
+// Índice composto: principal filtro de leitura (user_id + status)
+AnswareSchema.index({ user_id: 1, status: 1 });
+
 export default mongoose.model('Answare', AnswareSchema);
