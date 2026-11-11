@@ -149,7 +149,12 @@ export async function updateAnswareService(aId, updatedAnware) {
     { $set: { answares: mergedAnswares, complete_percentage: tempDoc.complete_percentage } }
   );
 
-  return await Answare.findById(aId);
+  // Retorna apenas o necessário para o autosave do app:
+  // o segundo findById foi eliminado para evitar re-carregar o documento inteiro.
+  return {
+    _id: aId,
+    complete_percentage: tempDoc.complete_percentage,
+  };
 }
 
 export async function setAsDoneService(aId) {
