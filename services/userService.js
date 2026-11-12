@@ -115,20 +115,26 @@ export async function createUserByAdminService(requesterId, userStructure) {
   return await createUser({ ...userStructure, company })
 }
 
-export async function userListService(userId) {
+export async function userListService(userId, { page = 1, limit = 50 } = {}) {
   const currentUserRaw = await User.findOne({ _id: userId });
   const currentUser = await getUserWithoutPassword(currentUserRaw)
 
-  let users
-  if(currentUser.access_level == 3) {
-    users = await User.find()
-  } else {
-    users = await User.find({company: currentUser.company})
-  }
+  const filter = currentUser.access_level == 3 ? {} : { company: currentUser.company };
+  const skip = (page - 1) * limit;
 
-  users = users.map(user => getUserWithoutPassword(user))
+  const [rawUsers, total] = await Promise.all([
+    User.find(filter)
+      .select('-password -reset_token -token_expires_at')
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    User.countDocuments(filter),
+  ]);
 
-  return users
+  const items = rawUsers.map(user => getUserWithoutPassword(user));
+
+  return { items, total, page, limit, hasMore: skip + items.length < total };
 }
 
 export async function userDeleteService(requesterId, userId) {

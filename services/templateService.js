@@ -9,6 +9,10 @@ import puppeteer from "puppeteer";
 import { getImageAsBase64Service } from "./imageService.js";
 import { isSuperAdmin, isCompanyAdmin, belongsToCompany } from "../utils/permissions.js";
 import { userError } from "../utils/errors.js";
+import { getCache, setCache, invalidateCache, TTL } from "../utils/cache.js";
+
+// Prefixo de cache para todas as entradas de listagem de templates
+const TEMPLATE_CACHE_PREFIX = 'templates:';
 
 function sanitizeQuestionOptions(questions = []) {
   return questions.map(q => ({
@@ -24,31 +28,67 @@ export async function createTemplateService(newTemplate) {
       questions: sanitizeQuestionOptions(newTemplate.questions)
     });
     await novo.save();
+    // Novo template criado — invalida cache de listagens ativas
+    invalidateCache(TEMPLATE_CACHE_PREFIX);
     return novo
   } catch (err) {
     throw err
   }
 }
 
-export async function getTemplatesService(kind) {
+// Projeção de lista: exclui questions[] (payload pesado).
+// O detalhe completo é obtido por getTemplateByIdService ao abrir/editar.
+const TEMPLATE_LIST_PROJECTION = '_id status created_at config';
+
+export async function getTemplatesService(kind, { page = 1, limit = 20 } = {}) {
+  const cacheKey = `${TEMPLATE_CACHE_PREFIX}active:${kind}:${page}:${limit}`;
+  const cached = getCache(cacheKey);
+  if (cached) return cached;
+
   try {
-    const templates = Template.find({
-      "config.kind": kind,
-      status: { $ne: 'archived' }
-    })
-    return templates
+    const filter = { "config.kind": kind, status: { $ne: 'archived' } };
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      Template.find(filter)
+        .select(TEMPLATE_LIST_PROJECTION)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Template.countDocuments(filter),
+    ]);
+
+    const result = { items, total, page, limit, hasMore: skip + items.length < total };
+    setCache(cacheKey, result, TTL.TEMPLATES);
+    return result;
   } catch (e) {
     throw e
   }
 }
 
-export async function getArchivedTemplatesService(kind) {
+export async function getArchivedTemplatesService(kind, { page = 1, limit = 20 } = {}) {
+  const cacheKey = `${TEMPLATE_CACHE_PREFIX}archived:${kind}:${page}:${limit}`;
+  const cached = getCache(cacheKey);
+  if (cached) return cached;
+
   try {
-    const templates = Template.find({
-      "config.kind": kind,
-      status: 'archived'
-    })
-    return templates
+    const filter = { "config.kind": kind, status: 'archived' };
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      Template.find(filter)
+        .select(TEMPLATE_LIST_PROJECTION)
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Template.countDocuments(filter),
+    ]);
+
+    const result = { items, total, page, limit, hasMore: skip + items.length < total };
+    setCache(cacheKey, result, TTL.TEMPLATES);
+    return result;
   } catch (e) {
     throw e
   }
@@ -104,6 +144,9 @@ export async function updateTemplateService(tId, updatedTemplate, userId) {
 
   await Template.updateOne({ _id: tId }, { $set: dataToUpdate }, { runValidators: true });
 
+  // Invalida cache de listagens para refletir a atualização
+  invalidateCache(TEMPLATE_CACHE_PREFIX);
+
   return await Template.findById(tId);
 }
 
@@ -130,6 +173,9 @@ export async function deleteTemplateService(tId, userId) {
   }
 
   await Template.deleteOne({ _id: tId });
+
+  // Invalida cache de listagens para refletir a exclusão
+  invalidateCache(TEMPLATE_CACHE_PREFIX);
 
   return { message: "Template deletado!" };
 }
@@ -278,6 +324,9 @@ export async function toggleArchiveTemplateService(tId) {
   const newStatus = template.status === 'archived' ? 'open' : 'archived';
 
   await Template.updateOne({ _id: tId }, { $set: { status: newStatus } });
+
+  // Invalida cache ativo e arquivado — o template migrou entre os dois grupos
+  invalidateCache(TEMPLATE_CACHE_PREFIX);
 
   return { message: `Template ${newStatus === 'archived' ? 'arquivado' : 'desarquivado'}!` };
 }

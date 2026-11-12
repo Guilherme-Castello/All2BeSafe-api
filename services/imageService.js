@@ -43,6 +43,30 @@ export async function getImageSignedUrlService(fileName) {
 }
 
 /**
+ * Gera uma URL pré-assinada GCS para upload direto pelo cliente (PUT).
+ * O app envia a imagem diretamente ao GCS sem passar pelo servidor da API,
+ * eliminando o uso de memória do Multer e o tráfego pela instância Render.
+ *
+ * @param {string} [clientFileName] - nome sugerido pelo cliente (opcional)
+ * @returns {{ signedUrl: string, fileName: string }}
+ */
+export async function getUploadSignedUrlService(clientFileName) {
+  // Nome gerado server-side para garantir unicidade e evitar path traversal
+  const ext = clientFileName ? clientFileName.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') || 'jpg' : 'jpg';
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const file = bucket.file(fileName);
+
+  const [signedUrl] = await file.getSignedUrl({
+    version: 'v4',
+    action: 'write',
+    expires: Date.now() + 15 * 60 * 1000, // 15 minutos
+    contentType: 'image/jpeg',
+  });
+
+  return { signedUrl, fileName };
+}
+
+/**
  * Baixa a imagem do GCS, redimensiona para no máximo 900px de largura
  * e comprime para JPEG 75% — evita OOM no Puppeteer ao gerar o PDF.
  * Retorna um data URI base64 pronto para embutir no HTML.
