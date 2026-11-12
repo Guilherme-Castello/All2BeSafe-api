@@ -1,4 +1,4 @@
-import { deleteImageController, getImageUrlController, uploadImageController } from "../controllers/ImageController.js";
+import { deleteImageController, getImageUrlController, getUploadUrlController, uploadImageController } from "../controllers/ImageController.js";
 import express from "express";
 import multer from "multer";
 
@@ -15,7 +15,8 @@ const upload = multer({
   },
 });
 
-router.post("/uploadImage", upload.single("file"), uploadImageController);
+router.post("/uploadImage", upload.single("file"), uploadImageController); // legado — mantido para compatibilidade
+router.post("/getUploadUrl", getUploadUrlController);                       // novo — URL pré-assinada para upload direto ao GCS
 router.post("/getImageUrl", getImageUrlController);
 router.post("/deleteImage", deleteImageController);
 

@@ -1,4 +1,4 @@
-import { deleteImageService, getImageSignedUrlService, uploadImageService } from "../services/imageService.js";
+import { deleteImageService, getImageSignedUrlService, getUploadSignedUrlService, uploadImageService } from "../services/imageService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 
 export async function uploadImageController(req, res) {
@@ -22,6 +22,21 @@ export async function getImageUrlController(req, res) {
     handleSuccess(url, res)
   } catch (e) {
     handleError(e.message, res)
+  }
+}
+
+/**
+ * Retorna uma URL pré-assinada GCS para upload direto (PUT) pelo app.
+ * O cliente envia a imagem sem passar pelo servidor, reduzindo latência
+ * e uso de memória RAM na instância Render.
+ */
+export async function getUploadUrlController(req, res) {
+  try {
+    const { fileName: clientFileName } = req.body;
+    const result = await getUploadSignedUrlService(clientFileName);
+    return handleSuccess(result, res);
+  } catch (e) {
+    return handleError(e.message, res);
   }
 }
 
