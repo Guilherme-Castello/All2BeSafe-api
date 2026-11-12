@@ -2,6 +2,32 @@ import { getCompanyByUserId } from "../services/CompanyService.js";
 import { createTemplateService, deleteTemplateService, generateAnswarePDFService, getArchivedTemplatesService, getTemplateByIdService, getTemplatesByCompanyService, getTemplatesService, toggleArchiveTemplateService, updateTemplateService } from "../services/templateService.js";
 import { handleError, handleSuccess } from "../utils/httpResponse.js";
 import { pdfQueue } from "../queues/pdfQueue.js";
+import { generateAndStoreAnswarePDFService } from "../services/pdfService.js";
+
+const PDF_QUEUE_READY_TIMEOUT_MS = 5000;
+
+async function withTimeout(promise) {
+  let timeout;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Redis timeout')), PDF_QUEUE_READY_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function isPdfQueueReady() {
+  try {
+    await withTimeout(pdfQueue.waitUntilReady());
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function createTemplateController(req, res) {
   try {
@@ -91,9 +117,15 @@ export async function generateAnswarePDFController(req, res) {
     const { answare_id, userid } = req.method === 'GET' ? req.query : req.body;
     if (!answare_id || !userid) return handleError('answare_id e userid são obrigatórios', res, 400);
 
-    const job = await pdfQueue.add('generate', { answareid: answare_id, userid });
+    if (await isPdfQueueReady()) {
+      const job = await pdfQueue.add('generate', { answareid: answare_id, userid });
+      return handleSuccess({ jobId: job.id, status: 'queued' }, res);
+    }
 
-    return handleSuccess({ jobId: job.id, status: 'queued' }, res);
+    console.warn('[generateAnswarePDFController] Redis indisponível; gerando PDF sem fila.');
+    const fileKey = `direct-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const { signedUrl, fileName } = await generateAndStoreAnswarePDFService(answare_id, userid, fileKey);
+    return handleSuccess({ status: 'done', url: signedUrl, fileName }, res);
   } catch (e) {
     console.error('[generateAnswarePDFController]', e);
     return handleError(e.message, res);

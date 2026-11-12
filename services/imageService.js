@@ -56,7 +56,7 @@ export async function getUploadSignedUrlService(clientFileName) {
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const file = bucket.file(fileName);
 
-  const [signedUrl] = await file.generateSignedUrl({
+  const [signedUrl] = await file.getSignedUrl({
     version: 'v4',
     action: 'write',
     expires: Date.now() + 15 * 60 * 1000, // 15 minutos

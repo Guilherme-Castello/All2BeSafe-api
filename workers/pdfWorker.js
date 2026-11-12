@@ -1,7 +1,6 @@
 import { Worker } from 'bullmq';
 import connection from '../config/redis.js';
-import { generateAnswarePDFService } from '../services/templateService.js';
-import { bucket } from '../config/gcs.js';
+import { generateAndStoreAnswarePDFService } from '../services/pdfService.js';
 
 /**
  * Worker que processa jobs da fila 'pdf-generation'.
@@ -20,26 +19,10 @@ export const pdfWorker = new Worker(
 
     console.log(`[pdfWorker] iniciando job ${job.id} — answare: ${answareid}`);
 
-    // 1. Gera o PDF (lógica existente, agora em background)
-    const pdfBuffer = await generateAnswarePDFService(answareid, userid);
+    const result = await generateAndStoreAnswarePDFService(answareid, userid, job.id);
 
-    // 2. Salva no GCS sob o prefixo pdfs/
-    const gcsFileName = `pdfs/${job.id}.pdf`;
-    const file = bucket.file(gcsFileName);
-    await file.save(pdfBuffer, {
-      contentType: 'application/pdf',
-      resumable: false,
-    });
-
-    // 3. URL pré-assinada válida por 60 minutos para o app baixar diretamente
-    const [signedUrl] = await file.generateSignedUrl({
-      version: 'v4',
-      action: 'read',
-      expires: Date.now() + 60 * 60 * 1000,
-    });
-
-    console.log(`[pdfWorker] job ${job.id} concluído — ${gcsFileName}`);
-    return { signedUrl, fileName: gcsFileName };
+    console.log(`[pdfWorker] job ${job.id} concluído — ${result.fileName}`);
+    return result;
   },
   {
     connection,
