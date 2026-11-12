@@ -7,6 +7,9 @@ import mongoose from 'mongoose';
 import express from 'express';
 import cors from 'cors';
 
+//  Workers (inicializar antes das rotas para garantir que a fila esteja ativa)
+import './workers/pdfWorker.js';
+
 //  Routes
 import auth from './routes/auth.js'
 import user from './routes/user.js'
