@@ -1,35 +1,33 @@
-import { Worker } from 'bullmq';
-import connection from '../config/redis.js';
+/**
+ * Worker de geração de PDFs — Agenda.js (MongoDB).
+ *
+ * Substitui o worker BullMQ anterior que dependia de Redis.
+ * O processamento é idêntico: recebe { jobId, answareid, userid },
+ * gera o PDF via Puppeteer + GCS e persiste a URL assinada de volta
+ * no próprio documento do job no MongoDB para ser lida pelo controller.
+ *
+ * concurrency: 2 — no máximo 2 Chromiums simultâneos, evitando OOM no Render.
+ */
+import agenda from '../config/agenda.js';
 import { generateAndStoreAnswarePDFService } from '../services/pdfService.js';
 
-/**
- * Worker que processa jobs da fila 'pdf-generation'.
- *
- * Para cada job:
- *   1. Gera o PDF buffer (Puppeteer + GCS images + Sharp)
- *   2. Salva o PDF no bucket GCS em pdfs/{jobId}.pdf
- *   3. Gera URL pré-assinada de leitura (60 min) e retorna como resultado
- *
- * concurrency: 2 — no máximo 2 Chromiums simultâneos, evitando OOM.
- */
-export const pdfWorker = new Worker(
-  'pdf-generation',
-  async (job) => {
-    const { answareid, userid } = job.data;
+agenda.define('generate-pdf', { concurrency: 2 }, async (job) => {
+  const { jobId, answareid, userid } = job.attrs.data;
 
-    console.log(`[pdfWorker] iniciando job ${job.id} — answare: ${answareid}`);
+  console.log(`[pdfWorker] iniciando job ${jobId} — answare: ${answareid}`);
 
-    const result = await generateAndStoreAnswarePDFService(answareid, userid, job.id);
+  const result = await generateAndStoreAnswarePDFService(answareid, userid, jobId);
 
-    console.log(`[pdfWorker] job ${job.id} concluído — ${result.fileName}`);
-    return result;
-  },
-  {
-    connection,
-    concurrency: 2,
-  }
-);
+  // Persiste o resultado no próprio documento do job no MongoDB.
+  // O controller lê attrs.data.result ao verificar o status.
+  job.attrs.data.result = { signedUrl: result.signedUrl, fileName: result.fileName };
+  await job.save();
 
-pdfWorker.on('failed', (job, err) => {
-  console.error(`[pdfWorker] job ${job?.id} falhou (tentativa ${job?.attemptsMade}):`, err.message);
+  console.log(`[pdfWorker] job ${jobId} concluído — ${result.fileName}`);
 });
+
+agenda.on('fail:generate-pdf', (err, job) => {
+  console.error(`[pdfWorker] job ${job.attrs.data?.jobId} falhou:`, err.message);
+});
+
+export default agenda;

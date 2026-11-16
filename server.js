@@ -7,8 +7,10 @@ import mongoose from 'mongoose';
 import express from 'express';
 import cors from 'cors';
 
-//  Workers (inicializar antes das rotas para garantir que a fila esteja ativa)
+// Agenda: carrega definições de jobs (agenda.define) antes das rotas.
+// O start() é chamado após a conexão com o MongoDB.
 import './workers/pdfWorker.js';
+import agenda from './config/agenda.js';
 
 //  Routes
 import auth from './routes/auth.js'
@@ -31,11 +33,24 @@ mongoose.connect(process.env.MONGO_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ Conectado ao MongoDB com sucesso!'))
+.then(async () => {
+  console.log('✅ Conectado ao MongoDB com sucesso!');
+  await agenda.start();
+  console.log('✅ [Agenda] iniciada — processamento de PDFs ativo (sem Redis)');
+})
 .catch(err => {
   console.error('❌ Erro ao conectar ao MongoDB:', err.message);
   process.exit(1);
 });
+
+// Graceful shutdown: aguarda jobs em execução antes de encerrar.
+async function gracefulShutdown(signal) {
+  console.log(`[server] ${signal} recebido — encerrando Agenda...`);
+  await agenda.stop();
+  process.exit(0);
+}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 
 // Rotas
 app.use('/api/templates', templates);
