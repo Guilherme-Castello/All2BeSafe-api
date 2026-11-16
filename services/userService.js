@@ -132,7 +132,10 @@ export async function userListService(userId, { page = 1, limit = 50 } = {}) {
     User.countDocuments(filter),
   ]);
 
-  const items = rawUsers.map(user => getUserWithoutPassword(user));
+  // .lean() já retorna objetos JS puros e .select() já excluiu os campos
+  // sensíveis (password, reset_token, token_expires_at), então não é necessário
+  // chamar getUserWithoutPassword (que depende de .toObject() do Mongoose).
+  const items = rawUsers;
 
   return { items, total, page, limit, hasMore: skip + items.length < total };
 }
