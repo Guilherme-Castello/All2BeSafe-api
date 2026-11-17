@@ -20,6 +20,7 @@ import answares from './routes/answares.js'
 import companies from './routes/companies.js'
 import images from './routes/images.js'
 import sections from './routes/sections.js'
+import actions from './routes/actions.js'
 
 const app = express();
 app.use(cors());
@@ -60,6 +61,7 @@ app.use('/api/answares', answares);
 app.use('/api/companies', companies);
 app.use('/api/images', images);
 app.use('/api/sections', sections);
+app.use('/api/actions', actions);
 
 // Inicialização do servidor
 const PORT = process.env.PORT || 5000;
